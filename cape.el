@@ -60,10 +60,6 @@
   "Dictionary word list file."
   :type 'string)
 
-(defcustom cape-company-timeout 5.0
-  "Company asynchronous timeout."
-  :type '(choice nil float))
-
 (defcustom cape-dabbrev-min-length 4
   "Minimum length of dabbrev expansions."
   :type 'integer)
@@ -712,8 +708,8 @@ is nil the function acts like a capf." method method)
 
 (defun cape--abbrev-exit (_str status)
   "Expand expansion if STATUS is not exact."
-   (unless (eq status 'exact)
-     (expand-abbrev)))
+  (unless (eq status 'exact)
+    (expand-abbrev)))
 
 (defvar cape--abbrev-properties
   (list :annotation-function #'cape--abbrev-annotation
@@ -878,30 +874,33 @@ If INTERACTIVE is nil the function acts like a capf."
     (pcase (apply app)
       ;; Handle async future return values.
       (`(:async . ,fetch)
-       (let ((res 'cape--waiting)
-             (start (time-to-seconds)))
-         (unwind-protect
-             (progn
-               (funcall fetch (lambda (arg)
-                                (when (eq res 'cape--waiting)
-                                  (push 'cape--done unread-command-events))
-                                (setq res arg)))
-               ;; Force synchronization.
-               (while (eq res 'cape--waiting)
-                 ;; When we've got input, interrupt the computation.
-                 (when (and unread-command-events toi)
-                   (throw toi nil))
-                 (when (and cape-company-timeout
-                            (> (- (time-to-seconds) start) cape-company-timeout))
-                   (error "Cape company backend async timeout"))
-                 (sit-for 0.1 'noredisplay)))
-           ;; Remove cape--done introduced by future callback
-           ;; XXX NOTE: For some reason Emacs sometimes converts
-           ;; cape--done to (t . cape--done).
-           (setq unread-command-events
-                 (delq 'cape--done
-                       (delete '(t . cape--done)
-                               unread-command-events))))
+       (let ((res 'cape--waiting))
+         (if toi
+             (unwind-protect
+                 (progn
+                   (funcall fetch (lambda (arg)
+                                    (when (eq res 'cape--waiting)
+                                      (push 'cape--done unread-command-events))
+                                    (setq res arg)))
+                   ;; Force synchronization, interruptible!
+                   (while (eq res 'cape--waiting)
+                     ;; When we've got input, interrupt the computation.
+                     (when unread-command-events (throw toi nil))
+                     (sit-for 0.1 'noredisplay)))
+               ;; Remove cape--done introduced by future callback.
+               ;; NOTE: `sit-for' converts cape--done to (t . cape--done).
+               ;; It seems that `sit-for' does not use a robust method to
+               ;; reinject inputs, maybe the implementation will change in
+               ;; the future.
+               (setq unread-command-events (delq 'cape--done
+                                                 (delete '(t . cape--done)
+                                                         unread-command-events))))
+           (funcall fetch (lambda (arg) (setq res arg)))
+           ;; Force synchronization, not interruptible! We use polling
+           ;; here and ignore pending input since we don't use
+           ;; `sit-for'. This is the same method used by Company itself.
+           (while (eq res 'cape--waiting)
+             (sleep-for 0.01)))
          res))
       ;; Plain old synchronous return value.
       (res res))))
@@ -951,10 +950,17 @@ This feature is experimental."
                                       (or (car (member x candidates)) x)))))))))
 
 ;;;###autoload
-(defun cape-capf-buster (capf &optional valid)
-  "Return transformed CAPF where the cache is busted on input change.
-VALID is the input comparator, see `cape--input-valid-p'."
-  (lambda ()
+(defun cape-interactive-capf (capf)
+  "Create interactive completion function from CAPF."
+  (lambda (&optional interactive)
+    (interactive (list t))
+    (if interactive (cape--interactive capf) (funcall capf))))
+
+;;;###autoload
+(defun cape-wrap-buster (capf &optional valid)
+  "Call CAPF and return a completion table with cache busting.
+The cache is busted when the input changes, where VALID is the input
+comparator, see `cape--input-valid-p'."
     (pcase (funcall capf)
       (`(,beg ,end ,table . ,plist)
        `(,beg ,end
@@ -970,76 +976,100 @@ VALID is the input comparator, see `cape--input-valid-p'."
                           ;; An interruption should not happen between the setqs.
                           (setq table new-table input new-input)))))
                    (complete-with-action action table str pred)))
-              ,@plist)))))
+              ,@plist))))
 
 ;;;###autoload
-(defun cape-capf-with-properties (capf &rest properties)
-  "Return a new CAPF with additional completion PROPERTIES.
+(defun cape-wrap-properties (capf &rest properties)
+  "Call CAPF and add additional completion PROPERTIES.
 Completion properties include for example :exclusive, :annotation-function and
 the various :company-* extensions. Furthermore a boolean :sort flag and a
 completion :category symbol can be specified."
-  (lambda ()
-    (pcase (funcall capf)
-      (`(,beg ,end ,table . ,plist)
-       `(,beg ,end
-              ,(apply #'cape--table-with-properties table properties)
-              ,@properties ,@plist)))))
+  (pcase (funcall capf)
+    (`(,beg ,end ,table . ,plist)
+     `(,beg ,end
+            ,(apply #'cape--table-with-properties table properties)
+            ,@properties ,@plist))))
 
 ;;;###autoload
-(defun cape-capf-with-predicate (capf predicate)
-  "Return a new CAPF with an additional candidate PREDICATE.
+(defun cape-wrap-predicate (capf predicate)
+  "Call CAPF and add an additional candidate PREDICATE.
 The PREDICATE is passed the candidate symbol or string."
-  (lambda ()
-    (pcase (funcall capf)
-      (`(,beg ,end ,table . ,plist)
-       `(,beg ,end ,table
-              :predicate
-              ,(if-let (pred (plist-get plist :predicate))
-                   ;; First argument is key, second is value for hash tables.
-                   ;; The first argument can be a cons cell for alists. Then
-                   ;; the candidate itself is either a string or a symbol. We
-                   ;; normalize the calling convention here such that PREDICATE
-                   ;; always receives a string or a symbol.
-                   (lambda (&rest args)
-                     (when (apply pred args)
-                       (setq args (car args))
-                       (funcall predicate (if (consp args) (car args) args))))
-                 (lambda (key &optional _val)
-                   (funcall predicate (if (consp key) (car key) key))))
-              ,@plist)))))
+  (pcase (funcall capf)
+    (`(,beg ,end ,table . ,plist)
+     `(,beg ,end ,table
+            :predicate
+            ,(if-let (pred (plist-get plist :predicate))
+                 ;; First argument is key, second is value for hash tables.
+                 ;; The first argument can be a cons cell for alists. Then
+                 ;; the candidate itself is either a string or a symbol. We
+                 ;; normalize the calling convention here such that PREDICATE
+                 ;; always receives a string or a symbol.
+                 (lambda (&rest args)
+                   (when (apply pred args)
+                     (setq args (car args))
+                     (funcall predicate (if (consp args) (car args) args))))
+               (lambda (key &optional _val)
+                 (funcall predicate (if (consp key) (car key) key))))
+            ,@plist))))
 
 ;;;###autoload
-(defun cape-silent-capf (capf)
-  "Create a new CAPF which is silent (no messages, no errors)."
-  (lambda ()
-    (pcase (cape--silent (funcall capf))
-      (`(,beg ,end ,table . ,plist)
-       `(,beg ,end ,(cape--silent-table table) ,@plist)))))
+(defun cape-wrap-silent (capf)
+  "Call CAPF and silence it (no messages, no errors)."
+  (pcase (cape--silent (funcall capf))
+    (`(,beg ,end ,table . ,plist)
+     `(,beg ,end ,(cape--silent-table table) ,@plist))))
 
 ;;;###autoload
-(defun cape-capf-case-fold (capf &optional dont-fold)
-  "Create a new CAPF which is case insensitive.
-If DONT-FOLD is non-nil, return a completion table that is
-case sensitive instead."
-  (lambda ()
-    (pcase (funcall capf)
-      (`(,beg ,end ,table . ,plist)
-       `(,beg ,end ,(completion-table-case-fold table dont-fold) ,@plist)))))
+(defun cape-wrap-case-fold (capf &optional dont-fold)
+  "Call CAPF and return a case insenstive completion table.
+If DONT-FOLD is non-nil return a case sensitive table instead."
+  (pcase (funcall capf)
+    (`(,beg ,end ,table . ,plist)
+     `(,beg ,end ,(completion-table-case-fold table dont-fold) ,@plist))))
 
 ;;;###autoload
-(defun cape-noninterruptible-capf (capf)
-  "Create a new CAPF which is non-interruptible silent by input."
-  (lambda ()
-    (pcase (funcall capf)
-      (`(,beg ,end ,table . ,plist)
-       `(,beg ,end ,(cape--noninterruptible-table table) ,@plist)))))
+(defun cape-wrap-noninterruptible (capf)
+  "Call CAPF and return a non-interruptible completion table."
+  (pcase (funcall capf)
+    (`(,beg ,end ,table . ,plist)
+     `(,beg ,end ,(cape--noninterruptible-table table) ,@plist))))
 
 ;;;###autoload
-(defun cape-interactive-capf (capf)
-  "Create interactive completion function from CAPF."
-  (lambda (&optional interactive)
-    (interactive (list t))
-    (if interactive (cape--interactive capf) (funcall capf))))
+(defun cape-wrap-purify (capf)
+  "Call CAPF and ensure that it does not modify the buffer."
+  ;; bug#50470: Fix Capfs which illegally modify the buffer or which
+  ;; illegally call `completion-in-region'. The workaround here has been
+  ;; proposed @jakanakaevangeli in bug#50470 and is used in
+  ;; @jakanakaevangeli's capf-autosuggest package.
+  (catch 'cape--illegal-completion-in-region
+    (condition-case nil
+        (let ((buffer-read-only t)
+              (inhibit-read-only nil)
+              (completion-in-region-function
+               (lambda (beg end coll pred)
+                 (throw 'cape--illegal-completion-in-region
+                        (list beg end coll :predicate pred)))))
+          (funcall capf))
+      (buffer-read-only nil))))
+
+(defmacro cape--capf-wrapper (wrapper)
+  "Create a capf transformer for WRAPPER."
+  `(defun ,(intern (format "cape-capf-%s" wrapper)) (&rest args)
+     (lambda () (apply #',(intern (format "cape-wrap-%s" wrapper)) args))))
+
+;;;###autoload (autoload 'cape-capf-noninterruptible "cape")
+;;;###autoload (autoload 'cape-capf-case-fold "cape")
+;;;###autoload (autoload 'cape-capf-silent "cape")
+;;;###autoload (autoload 'cape-capf-predicate "cape")
+;;;###autoload (autoload 'cape-capf-properties "cape")
+;;;###autoload (autoload 'cape-capf-buster "cape")
+(cape--capf-wrapper noninterruptible)
+(cape--capf-wrapper case-fold)
+(cape--capf-wrapper silent)
+(cape--capf-wrapper predicate)
+(cape--capf-wrapper properties)
+(cape--capf-wrapper buster)
+(cape--capf-wrapper purify)
 
 (provide 'cape)
 ;;; cape.el ends here
