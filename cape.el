@@ -879,23 +879,19 @@ If INTERACTIVE is nil the function acts like a capf."
          (if toi
              (unwind-protect
                  (progn
-                   (funcall fetch (lambda (arg)
-                                    (when (eq res 'cape--waiting)
-                                      (push 'cape--done unread-command-events))
-                                    (setq res arg)))
-                   ;; Force synchronization, interruptible!
-                   (while (eq res 'cape--waiting)
-                     ;; When we've got input, interrupt the computation.
-                     (when unread-command-events (throw toi nil))
-                     (sit-for 0.1 'noredisplay)))
-               ;; Remove cape--done introduced by future callback.
-               ;; NOTE: `sit-for' converts cape--done to (t . cape--done).
-               ;; It seems that `sit-for' does not use a robust method to
-               ;; reinject inputs, maybe the implementation will change in
-               ;; the future.
-               (setq unread-command-events (delq 'cape--done
-                                                 (delete '(t . cape--done)
-                                                         unread-command-events))))
+                   (funcall fetch
+                            (lambda (arg)
+                              (when (eq res 'cape--waiting)
+                                (push 'cape--done unread-command-events)
+                                (setq res arg))))
+                   (when (eq res 'cape--waiting)
+                     (let ((ev (let (input-method-function) (read-event nil t))))
+                       (unless (eq ev 'cape--done)
+                         (push (cons t ev) unread-command-events)
+                         (setq res 'cape--cancelled)
+                         (throw toi t)))))
+               (setq unread-command-events
+                     (delq 'cape--done unread-command-events)))
            (funcall fetch (lambda (arg) (setq res arg)))
            ;; Force synchronization, not interruptible! We use polling
            ;; here and ignore pending input since we don't use
