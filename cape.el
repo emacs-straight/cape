@@ -61,7 +61,10 @@
   :type 'string)
 
 (defcustom cape-dabbrev-min-length 4
-  "Minimum length of dabbrev expansions."
+  "Minimum length of dabbrev expansions.
+This setting ensures that words which are too short
+are not offered as completion candidates, such that
+auto completion does not pop up too aggressively."
   :type 'integer)
 
 (defcustom cape-dabbrev-check-other-buffers t
@@ -422,6 +425,7 @@ VALID is the input comparator, see `cape--input-valid-p'."
 ;;;###autoload
 (defun cape-file (&optional interactive)
   "Complete file name at point.
+See the user option `cape-file-directory-must-exist'.
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
@@ -469,7 +473,7 @@ If INTERACTIVE is nil the function acts like a capf."
 
 ;;;###autoload
 (defun cape-symbol (&optional interactive)
-  "Complete symbol at point.
+  "Complete Elisp symbol at point.
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
@@ -497,6 +501,8 @@ If INTERACTIVE is nil the function acts like a capf."
 ;;;###autoload
 (defun cape-dabbrev (&optional interactive)
   "Complete with Dabbrev at point.
+See the user options `cape-dabbrev-min-length' and
+`cape-dabbrev-check-other-buffers'.
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
@@ -543,7 +549,7 @@ If INTERACTIVE is nil the function acts like a capf."
 
 ;;;###autoload
 (defun cape-ispell (&optional interactive)
-  "Complete with Ispell at point.
+  "Complete word at point with Ispell.
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
@@ -574,7 +580,8 @@ If INTERACTIVE is nil the function acts like a capf."
 
 ;;;###autoload
 (defun cape-dict (&optional interactive)
-  "Complete word at point.
+  "Complete word from dictionary at point.
+See the custom option `cape-dict-file'.
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
@@ -758,7 +765,8 @@ If INTERACTIVE is nil the function acts like a capf."
 
 ;;;###autoload
 (defun cape-keyword (&optional interactive)
-  "Complete word at point.
+  "Complete programming language keyword at point.
+See the variable `cape-keywords'.
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
