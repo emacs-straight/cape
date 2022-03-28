@@ -68,8 +68,14 @@ auto completion does not pop up too aggressively."
   :type 'integer)
 
 (defcustom cape-dabbrev-check-other-buffers t
-  "Buffers to check for dabbrev."
-  :type 'boolean)
+  "Buffers to check for dabbrev.
+
+If t, check all other buffers (subject to dabbrev ignore rules).
+Any other non-nil value only checks some other buffers, as per
+`dabbrev-select-buffers-function'."
+  :type '(choice (const :tag "off" nil)
+                 (const :tag "some" 'some)
+                 (other :tag "all" t)))
 
 (defcustom cape-file-directory-must-exist t
   "The parent directory must exist for file completion."
@@ -529,8 +535,8 @@ If INTERACTIVE is nil the function acts like a capf."
   "Find all dabbrev expansions for WORD."
   (require 'dabbrev)
   (cape--silent
-    (let ((dabbrev-check-all-buffers cape-dabbrev-check-other-buffers)
-          (dabbrev-check-other-buffers cape-dabbrev-check-other-buffers))
+    (let ((dabbrev-check-other-buffers (not (null cape-dabbrev-check-other-buffers)))
+          (dabbrev-check-all-buffers (eq cape-dabbrev-check-other-buffers t)))
       (dabbrev--reset-global-variables))
     (cl-loop with min-len = (+ cape-dabbrev-min-length (length word))
              for w in (dabbrev--find-all-expansions word (dabbrev--ignore-case-p word))
@@ -1061,6 +1067,17 @@ If DONT-FOLD is non-nil return a case sensitive table instead."
      `(,beg ,end ,(cape--noninterruptible-table table) ,@plist))))
 
 ;;;###autoload
+(defun cape-wrap-prefix-length (capf length)
+  "Call CAPF and ensure that prefix length is greater or equal than LENGTH.
+If the prefix is long enough, enforce auto completion."
+  (pcase (funcall capf)
+    (`(,beg ,end ,table . ,plist)
+     (when (>= (- end beg) length)
+       `(,beg ,end ,table
+         :company-prefix-length t
+         ,@plist)))))
+
+;;;###autoload
 (defun cape-wrap-purify (capf)
   "Call CAPF and ensure that it does not modify the buffer."
   ;; bug#50470: Fix Capfs which illegally modify the buffer or which
@@ -1083,19 +1100,22 @@ If DONT-FOLD is non-nil return a case sensitive table instead."
   `(defun ,(intern (format "cape-capf-%s" wrapper)) (&rest args)
      (lambda () (apply #',(intern (format "cape-wrap-%s" wrapper)) args))))
 
-;;;###autoload (autoload 'cape-capf-noninterruptible "cape")
-;;;###autoload (autoload 'cape-capf-case-fold "cape")
-;;;###autoload (autoload 'cape-capf-silent "cape")
-;;;###autoload (autoload 'cape-capf-predicate "cape")
-;;;###autoload (autoload 'cape-capf-properties "cape")
 ;;;###autoload (autoload 'cape-capf-buster "cape")
-(cape--capf-wrapper noninterruptible)
-(cape--capf-wrapper case-fold)
-(cape--capf-wrapper silent)
-(cape--capf-wrapper predicate)
-(cape--capf-wrapper properties)
 (cape--capf-wrapper buster)
+;;;###autoload (autoload 'cape-capf-case-fold "cape")
+(cape--capf-wrapper case-fold)
+;;;###autoload (autoload 'cape-capf-noninterruptible "cape")
+(cape--capf-wrapper noninterruptible)
+;;;###autoload (autoload 'cape-capf-predicate "cape")
+(cape--capf-wrapper predicate)
+;;;###autoload (autoload 'cape-capf-prefix-length "cape")
+(cape--capf-wrapper prefix-length)
+;;;###autoload (autoload 'cape-capf-properties "cape")
+(cape--capf-wrapper properties)
+;;;###autoload (autoload 'cape-capf-purify "cape")
 (cape--capf-wrapper purify)
+;;;###autoload (autoload 'cape-capf-silent "cape")
+(cape--capf-wrapper silent)
 
 (provide 'cape)
 ;;; cape.el ends here
