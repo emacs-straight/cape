@@ -31,6 +31,7 @@
 ;;
 ;; cape-dabbrev: Complete word from current buffers
 ;; cape-file: Complete file name
+;; cape-history: Complete from Eshell, Comint or minibuffer history
 ;; cape-keyword: Complete programming language keyword
 ;; cape-symbol: Complete Elisp symbol
 ;; cape-abbrev: Complete abbreviation (add-global-abbrev, add-mode-abbrev)
@@ -185,11 +186,42 @@ VALID is the input comparator, see `cape--input-valid-p'."
 
 ;;;; Capfs
 
+;;;;; cape-history
+
+(declare-function ring-elements "ring")
+
+(defvar cape--history-properties
+  (list :company-kind (lambda (_) 'text)
+        :exclusive 'no)
+  "Completion extra properties for `cape-history'.")
+
+(defun cape-history (&optional interactive)
+  "Complete from Eshell, Comint or minibuffer history.
+If INTERACTIVE is nil the function acts like a capf."
+  (interactive (list t))
+  (if interactive
+      (cape--interactive #'cape-history)
+    (let ((history
+           (cond
+            ((derived-mode-p 'eshell-mode)
+             (bound-and-true-p eshell-history-ring))
+            ((derived-mode-p 'comint-mode)
+             (bound-and-true-p comint-history-ring))
+            ((and (minibufferp) (not (eq minibuffer-history-variable t)))
+             (symbol-value minibuffer-history-variable)))))
+      (when (ring-p history)
+        (setq history (ring-elements history)))
+      (when history
+        `(,(line-beginning-position) ,(point)
+          ,(cape--table-with-properties history :sort nil)
+          ,@cape--history-properties)))))
+
 ;;;;; cape-file
 
 (defvar cape--file-properties
   (list :annotation-function (lambda (s) (if (string-suffix-p "/" s) " Folder" " File"))
-        :company-kind (lambda (s) (if (string-suffix-p "/" s) 'folder 'file)))
+        :company-kind (lambda (s) (if (string-suffix-p "/" s) 'folder 'file))
+        :exclusive 'no)
   "Completion extra properties for `cape-file'.")
 
 ;;;###autoload
@@ -210,13 +242,14 @@ If INTERACTIVE is nil the function acts like a capf."
           ,(cape--nonessential-table #'read-file-name-internal)
           ,@(and (not (equal file "/")) (string-suffix-p "/" file)
                  '(:company-prefix-length t))
-          :exclusive no ,@cape--file-properties)))))
+          ,@cape--file-properties)))))
 
 ;;;;; cape-symbol
 
 (defvar cape--symbol-properties
   (list :annotation-function #'cape--symbol-annotation
-        :company-kind #'cape--symbol-kind)
+        :company-kind #'cape--symbol-kind
+        :exclusive 'no)
   "Completion extra properties for `cape-symbol'.")
 
 (defun cape--symbol-kind (sym)
@@ -253,13 +286,14 @@ If INTERACTIVE is nil the function acts like a capf."
         (setq beg (1+ beg) end (max beg end)))
       `(,beg ,end
         ,(cape--table-with-properties obarray :category 'symbol)
-        :exclusive no ,@cape--symbol-properties))))
+        ,@cape--symbol-properties))))
 
 ;;;;; cape-dabbrev
 
 (defvar cape--dabbrev-properties
   (list :annotation-function (lambda (_) " Dabbrev")
-        :company-kind (lambda (_) 'text))
+        :company-kind (lambda (_) 'text)
+        :exclusive 'no)
   "Completion extra properties for `cape-dabbrev'.")
 
 (defvar dabbrev-check-all-buffers)
@@ -290,7 +324,7 @@ If INTERACTIVE is nil the function acts like a capf."
                                 ;; Problem is that when entering more input, candidates get lost!
                                 'prefix)
             :category 'cape-dabbrev)
-          :exclusive no ,@cape--dabbrev-properties)))))
+          ,@cape--dabbrev-properties)))))
 
 (defun cape--dabbrev-list (word)
   "Find all dabbrev expansions for WORD."
@@ -307,7 +341,8 @@ If INTERACTIVE is nil the function acts like a capf."
 
 (defvar cape--ispell-properties
   (list :annotation-function (lambda (_) " Ispell")
-        :company-kind (lambda (_) 'text))
+        :company-kind (lambda (_) 'text)
+        :exclusive 'no)
   "Completion extra properties for `cape-ispell'.")
 
 (declare-function ispell-lookup-words "ispell")
@@ -329,13 +364,14 @@ If INTERACTIVE is nil the function acts like a capf."
         ,(cape--table-with-properties
           (cape--cached-table (car bounds) (cdr bounds) #'cape--ispell-words 'substring)
           :category 'cape-ispell)
-        :exclusive no ,@cape--ispell-properties))))
+        ,@cape--ispell-properties))))
 
 ;;;;; cape-dict
 
 (defvar cape--dict-properties
   (list :annotation-function (lambda (_) " Dict")
-        :company-kind (lambda (_) 'text))
+        :company-kind (lambda (_) 'text)
+        :exclusive 'no)
   "Completion extra properties for `cape-dict'.")
 
 (defvar cape--dict-words nil)
@@ -359,7 +395,7 @@ If INTERACTIVE is nil the function acts like a capf."
     (let ((bounds (cape--bounds 'word)))
       `(,(car bounds) ,(cdr bounds)
         ,(cape--table-with-properties (cape--dict-words) :category 'cape-dict)
-        :exclusive no ,@cape--dict-properties))))
+        ,@cape--dict-properties))))
 
 ;;;;; cape-abbrev
 
@@ -394,7 +430,8 @@ If INTERACTIVE is nil the function acts like a capf."
 (defvar cape--abbrev-properties
   (list :annotation-function #'cape--abbrev-annotation
         :exit-function #'cape--abbrev-exit
-        :company-kind (lambda (_) 'snippet))
+        :company-kind (lambda (_) 'snippet)
+        :exclusive 'no)
   "Completion extra properties for `cape-abbrev'.")
 
 ;;;###autoload
@@ -410,7 +447,7 @@ If INTERACTIVE is nil the function acts like a capf."
       (let ((bounds (cape--bounds 'symbol)))
         `(,(car bounds) ,(cdr bounds)
           ,(cape--table-with-properties abbrevs :category 'cape-abbrev)
-          :exclusive no ,@cape--abbrev-properties)))))
+          ,@cape--abbrev-properties)))))
 
 ;;;;; cape-line
 
