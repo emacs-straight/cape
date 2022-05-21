@@ -561,13 +561,13 @@ If INTERACTIVE is nil the function acts like a Capf."
                   (_
                    (completion--some
                     (pcase-lambda (`(,table . ,plist))
-		      (let* ((pr (plist-get plist :predicate))
-			     (pred (if pr
-				       (if pred (lambda (x) ; satisfy both
-						  (and (funcall pred x) (funcall pr x)))
-					 pr)
-				     pred)))
-			(complete-with-action action table str pred)))
+                      (complete-with-action
+                       action table str
+                       (if-let (pr (plist-get plist :predicate))
+                           (if pred
+                               (lambda (x) (and (funcall pred x) (funcall pr x)))
+                             pr)
+                         pred)))
                     tables))))
               :exclusive 'no
               :company-prefix-length prefix-len
@@ -577,7 +577,7 @@ If INTERACTIVE is nil the function acts like a Capf."
               :company-deprecated (funcall extra-fun :company-deprecated)
               :company-kind (funcall extra-fun :company-kind)
               :annotation-function (funcall extra-fun :annotation-function)
-              :exit-function (lambda (x s) (funcall (funcall extra-fun :exit-function) x s)))))))
+              :exit-function (funcall extra-fun :exit-function))))))
 
 (defun cape--company-call (&rest app)
   "Apply APP and handle future return values."
