@@ -95,11 +95,14 @@ The buffers are scanned for completion candidates by `cape-line'."
                  (function :tag "Custom function")))
 
 (defcustom cape-symbol-wrapper
-  '((org-mode . ?=)
-    (markdown-mode . ?`)
-    (rst-mode . "``"))
+  '((org-mode ?= ?=)
+    (markdown-mode ?` ?`)
+    (rst-mode "``" "``")
+    (log-edit-mode "`" "'")
+    (rcirc-mode "`" "'"))
   "Wrapper characters for symbols."
-  :type '(alist :key-type symbol :value-type (choice character string)))
+  :type '(alist :key-type symbol :value-type (list (choice character string)
+                                                   (choice character string))))
 
 ;;;; Helpers
 
@@ -287,6 +290,7 @@ If INTERACTIVE is nil the function acts like a Capf."
   (append
    (list :annotation-function #'cape--symbol-annotation
          :exit-function #'cape--symbol-exit
+         :predicate #'cape--symbol-predicate
          :exclusive 'no)
    (when (>= emacs-major-version 28)
      (autoload 'elisp--company-kind "elisp-mode")
@@ -299,6 +303,10 @@ If INTERACTIVE is nil the function acts like a Capf."
            :company-location 'elisp--company-location)))
   "Completion extra properties for `cape-symbol'.")
 
+(defun cape--symbol-predicate (sym)
+  "Return t if SYM is bound, fbound or propertized."
+  (or (fboundp sym) (boundp sym) (symbol-plist sym)))
+
 (defun cape--symbol-exit (name status)
   "Wrap symbol NAME with `cape-symbol-wrapper' buffers.
 STATUS is the exit status."
@@ -307,8 +315,8 @@ STATUS is the exit status."
                          if (derived-mode-p m) return c)))
     (save-excursion
       (backward-char (length name))
-      (insert c))
-    (insert c)))
+      (insert (car c)))
+    (insert (cadr c))))
 
 (defun cape--symbol-annotation (sym)
   "Return kind of SYM."
