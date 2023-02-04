@@ -56,7 +56,7 @@ REGEXP is the regular expression matching the names."
                   (when (and (get-text-property beg 'face line) (< ename len) (<= echar len))
                     (let ((name (string-trim (substring-no-properties line beg ename)))
                           (char (string-trim (substring-no-properties line ename echar))))
-                      (when (and (string-match-p regexp name) (= (length char) 1))
+                      (when (and (string-match-p regexp name) (length= char 1))
                         (puthash name (aref char 0) hash))))
                   (setq beg echar)))))
           (kill-buffer)
@@ -117,7 +117,7 @@ is nil the function acts like a capf." method method)
                (when (and (memq last-input-event ',prefix)
                           (not (thing-at-point-looking-at ,thing-re)))
                  (self-insert-command 1 last-input-event))
-               (cape--interactive #',capf))
+               (cape-interactive #',capf))
            (when-let (bounds
                       (cond
                        ((thing-at-point-looking-at ,thing-re)

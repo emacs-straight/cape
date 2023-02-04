@@ -6,7 +6,7 @@
 ;; Maintainer: Daniel Mendler <mail@daniel-mendler.de>
 ;; Created: 2021
 ;; Version: 0.12
-;; Package-Requires: ((emacs "27.1"))
+;; Package-Requires: ((emacs "27.1") (compat "29.1.3.0"))
 ;; Homepage: https://github.com/minad/cape
 
 ;; This file is part of GNU Emacs.
@@ -44,6 +44,7 @@
 
 ;;; Code:
 
+(require 'compat)
 (eval-when-compile
   (require 'cl-lib)
   (require 'subr-x))
@@ -54,7 +55,12 @@
 
 (defgroup cape nil
   "Completion At Point Extensions."
+  :link '(info-link :tag "Info Manual" "(cape)")
+  :link '(url-link :tag "Homepage" "https://github.com/minad/cape")
+  :link '(emacs-library-link :tag "Library Source" "cape.el")
   :group 'convenience
+  :group 'tools
+  :group 'matching
   :prefix "cape-")
 
 (defcustom cape-dict-file "/usr/share/dict/words"
@@ -119,11 +125,6 @@ The buffers are scanned for completion candidates by `cape-line'."
   "Return bounds of THING."
   (or (bounds-of-thing-at-point thing) (cons (point) (point))))
 
-(defun cape--interactive (capf)
-  "Complete with CAPF."
-  (let ((completion-at-point-functions (list capf)))
-    (or (completion-at-point) (user-error "%s: No completions" capf))))
-
 (defmacro cape--wrapped-table (wrap body)
   "Create wrapped completion table, handle `completion--unquote'.
 WRAP is the wrapper function.
@@ -187,7 +188,7 @@ The CMP argument determines how the new input is compared to the old input.
         ('never nil)
         ((or 'prefix 'nil) (string-prefix-p old-input new-input))
         ('equal (equal old-input new-input))
-        ('substring (string-match-p (regexp-quote old-input) new-input)))))
+        ('substring (string-search old-input new-input)))))
 
 (defun cape--cached-table (beg end fun valid)
   "Create caching completion table.
@@ -237,7 +238,7 @@ See also `consult-history' for a more flexible variant based on
 `completing-read'. If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
-      (cape--interactive #'cape-history)
+      (cape-interactive #'cape-history)
     (let (history bol)
       (cond
        ((derived-mode-p 'eshell-mode)
@@ -272,7 +273,7 @@ If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
       (let (cape-file-directory-must-exist)
-        (cape--interactive #'cape-file))
+        (cape-interactive #'cape-file))
     (let* ((default-directory (pcase cape-file-directory
                                 ('nil default-directory)
                                 ((pred stringp) cape-file-directory)
@@ -285,7 +286,7 @@ If INTERACTIVE is nil the function acts like a Capf."
       (when org (setcar bounds (+ 5 (car bounds))))
       (when (or org
                 (not cape-file-directory-must-exist)
-                (and (string-match-p "/" file)
+                (and (string-search "/" file)
                      (file-exists-p (file-name-directory file))))
         `(,(car bounds) ,(cdr bounds)
           ,(cape--nonessential-table #'read-file-name-internal)
@@ -301,7 +302,7 @@ If INTERACTIVE is nil the function acts like a Capf."
          :exit-function #'cape--symbol-exit
          :predicate #'cape--symbol-predicate
          :exclusive 'no)
-   (when (>= emacs-major-version 28)
+   (when (eval-when-compile (>= emacs-major-version 28))
      (autoload 'elisp--company-kind "elisp-mode")
      (autoload 'elisp--company-doc-buffer "elisp-mode")
      (autoload 'elisp--company-doc-string "elisp-mode")
@@ -347,7 +348,7 @@ STATUS is the exit status."
 If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
-      (cape--interactive #'cape-symbol)
+      (cape-interactive #'cape-symbol)
     (pcase-let ((`(,beg . ,end) (cape--bounds 'symbol)))
       (when (eq (char-after beg) ?')
         (setq beg (1+ beg) end (max beg end)))
@@ -381,7 +382,7 @@ See the user options `cape-dabbrev-min-length' and
   (interactive (list t))
   (if interactive
       (let ((cape-dabbrev-min-length 0))
-        (cape--interactive #'cape-dabbrev))
+        (cape-interactive #'cape-dabbrev))
     (when (thing-at-point-looking-at "\\(?:\\sw\\|\\s_\\)+")
       (let ((beg (match-beginning 0))
             (end (match-end 0)))
@@ -428,7 +429,7 @@ See the user options `cape-dabbrev-min-length' and
 If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
-      (cape--interactive #'cape-ispell)
+      (cape-interactive #'cape-ispell)
     (let ((bounds (cape--bounds 'word)))
       `(,(car bounds) ,(cdr bounds)
         ,(cape--table-with-properties
@@ -461,7 +462,7 @@ See the custom option `cape-dict-file'.
 If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
-      (cape--interactive #'cape-dict)
+      (cape-interactive #'cape-dict)
     (let ((bounds (cape--bounds 'word)))
       `(,(car bounds) ,(cdr bounds)
         ,(cape--table-with-properties (cape--dict-words) :category 'cape-dict)
@@ -512,7 +513,7 @@ If INTERACTIVE is nil the function acts like a Capf."
   (if interactive
       ;; NOTE: Disable cycling since abbreviation replacement breaks it.
       (let (completion-cycle-threshold)
-        (cape--interactive #'cape-abbrev))
+        (cape-interactive #'cape-abbrev))
     (when-let (abbrevs (cape--abbrev-list))
       (let ((bounds (cape--bounds 'symbol)))
         `(,(car bounds) ,(cdr bounds)
@@ -536,7 +537,7 @@ If INTERACTIVE is nil the function acts like a Capf."
         (curr-buf (current-buffer))
         (buffers (funcall cape-line-buffer-function))
         lines)
-    (dolist (buf (if (listp buffers) buffers (list buffers)))
+    (dolist (buf (ensure-list buffers))
       (with-current-buffer buf
         (let ((beg (point-min))
               (max (point-max))
@@ -545,7 +546,7 @@ If INTERACTIVE is nil the function acts like a Capf."
           (save-excursion
             (while (< beg max)
               (goto-char beg)
-              (setq end (line-end-position))
+              (setq end (pos-eol))
               (unless (<= beg pt end)
                 (let ((line (buffer-substring-no-properties beg end)))
                   (unless (or (string-blank-p line) (gethash line ht))
@@ -561,8 +562,8 @@ The buffers returned by `cape-line-buffer-function' are scanned for lines.
 If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
-      (cape--interactive #'cape-line)
-    `(,(line-beginning-position) ,(point)
+      (cape-interactive #'cape-line)
+    `(,(pos-bol) ,(point)
       ,(cape--table-with-properties (cape--line-list) :sort nil)
       ,@cape--line-properties)))
 
@@ -693,8 +694,8 @@ This feature is experimental."
       (unless (symbol-value init)
         (cape--company-call backend 'init)
         (set init t))
-      (when-let* ((prefix (cape--company-call backend 'prefix))
-                  (initial-input (if (stringp prefix) prefix (car-safe prefix))))
+      (when-let ((prefix (cape--company-call backend 'prefix))
+                 (initial-input (if (stringp prefix) prefix (car-safe prefix))))
         (let* ((end (point)) (beg (- end (length initial-input)))
                (dups (cape--company-call backend 'duplicates))
                candidates)
@@ -732,11 +733,23 @@ This feature is experimental."
                                       (or (car (member x candidates)) x)))))))))
 
 ;;;###autoload
+(defun cape-interactive (&rest capfs)
+  "Complete interactively with the given CAPFS."
+  (let ((completion-at-point-functions capfs))
+    (unless (completion-at-point)
+      (user-error "%s: No completions"
+                  (mapconcat (lambda (fun)
+                               (if (symbolp fun)
+                                   (symbol-name fun)
+                                 "anonymous-capf"))
+                             capfs ", ")))))
+
+;;;###autoload
 (defun cape-interactive-capf (capf)
   "Create interactive completion function from CAPF."
   (lambda (&optional interactive)
     (interactive (list t))
-    (if interactive (cape--interactive capf) (funcall capf))))
+    (if interactive (cape-interactive capf) (funcall capf))))
 
 ;;;###autoload
 (defun cape-wrap-buster (capf &optional valid)
