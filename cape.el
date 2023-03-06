@@ -6,7 +6,7 @@
 ;; Maintainer: Daniel Mendler <mail@daniel-mendler.de>
 ;; Created: 2021
 ;; Version: 0.13
-;; Package-Requires: ((emacs "27.1") (compat "29.1.3.4"))
+;; Package-Requires: ((emacs "27.1") (compat "29.1.4.0"))
 ;; Homepage: https://github.com/minad/cape
 
 ;; This file is part of GNU Emacs.
@@ -72,7 +72,7 @@
 This setting ensures that words which are too short
 are not offered as completion candidates, such that
 auto completion does not pop up too aggressively."
-  :type 'integer)
+  :type 'natnum)
 
 (defcustom cape-dabbrev-check-other-buffers t
   "Buffers to check for dabbrev.
@@ -856,10 +856,11 @@ If the prefix is long enough, enforce auto completion."
 ;;;###autoload
 (defun cape-wrap-purify (capf)
   "Call CAPF and ensure that it does not modify the buffer."
-  ;; bug#50470: Fix Capfs which illegally modify the buffer or which
-  ;; illegally call `completion-in-region'. The workaround here has been
-  ;; proposed @jakanakaevangeli in bug#50470 and is used in
-  ;; @jakanakaevangeli's capf-autosuggest package.
+  ;; bug#50470: Fix Capfs which illegally modify the buffer or which illegally
+  ;; call `completion-in-region'.  The workaround here was proposed by
+  ;; @jakanakaevangeli and is used in his capf-autosuggest package.  In Emacs 29
+  ;; the purity bug of Pcomplete has been fixed, such that make
+  ;; `cape-wrap-purify' is not necessary anymore.
   (catch 'cape--illegal-completion-in-region
     (condition-case nil
         (let ((buffer-read-only t)
