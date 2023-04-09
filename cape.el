@@ -76,6 +76,13 @@ be loaded into Emacs.  Depending on the size of your dictionary
 one or the other approach is preferable."
   :type 'boolean)
 
+(defcustom cape-dict-case-replace 'case-replace
+  "Preserve case of input.
+See `dabbrev-case-replace' for details."
+  :type '(choice (const :tag "off" nil)
+                 (const :tag "based on `case-replace'" case-replace)
+                 (other :tag "on" t)))
+
 (defcustom cape-dabbrev-min-length 4
   "Minimum length of dabbrev expansions.
 This setting ensures that words which are too short
@@ -121,6 +128,23 @@ The buffers are scanned for completion candidates by `cape-line'."
                                                    (choice character string))))
 
 ;;;; Helpers
+
+(defun cape--case-replace-list (flag input strs)
+  "Replace case of STRS depending on INPUT and FLAG."
+  (if (and (if (eq flag 'case-replace) case-replace flag)
+           (not (equal input "")))
+      (mapcar (apply-partially #'cape--case-replace flag input) strs)
+    strs))
+
+(defun cape--case-replace (flag input str)
+  "Replace case of STR depending on INPUT and FLAG."
+  (or (and (if (eq flag 'case-replace) case-replace flag)
+           (not (equal input ""))
+           (string-prefix-p input str t)
+           (save-match-data
+             (and (string-match input input)
+                  (replace-match str nil nil input))))
+      str))
 
 (defmacro cape--silent (&rest body)
   "Silence BODY."
@@ -269,21 +293,21 @@ If INTERACTIVE is nil the function acts like a Capf."
   (if interactive
       (let (cape-file-directory-must-exist)
         (cape-interactive #'cape-file))
-    (let* ((default-directory (pcase cape-file-directory
-                                ('nil default-directory)
-                                ((pred stringp) cape-file-directory)
-                                (_ (funcall cape-file-directory))))
-           (bounds (cape--bounds 'filename))
-           (non-essential t)
-           (file (buffer-substring (car bounds) (cdr bounds)))
-           ;; Support org links globally, see `org-open-at-point-global'.
-           (org (string-prefix-p "file:" file)))
-      (when org (setcar bounds (+ 5 (car bounds))))
+    (pcase-let* ((default-directory (pcase cape-file-directory
+                                      ('nil default-directory)
+                                      ((pred stringp) cape-file-directory)
+                                      (_ (funcall cape-file-directory))))
+                 (`(,beg . ,end) (cape--bounds 'filename))
+                 (non-essential t)
+                 (file (buffer-substring-no-properties beg end))
+                 ;; Support org links globally, see `org-open-at-point-global'.
+                 (org (string-prefix-p "file:" file)))
+      (when org (setq beg (+ 5 beg)))
       (when (or org
                 (not cape-file-directory-must-exist)
                 (and (string-search "/" file)
                      (file-exists-p (file-name-directory file))))
-        `(,(car bounds) ,(cdr bounds)
+        `(,beg ,end
           ,(cape--nonessential-table #'read-file-name-internal)
           ,@(when (or org (string-match-p "./" file))
               '(:company-prefix-length t))
@@ -361,6 +385,7 @@ If INTERACTIVE is nil the function acts like a Capf."
 
 (defvar dabbrev-check-all-buffers)
 (defvar dabbrev-check-other-buffers)
+(defvar dabbrev-case-replace)
 (declare-function dabbrev--ignore-case-p "dabbrev")
 (declare-function dabbrev--find-all-expansions "dabbrev")
 (declare-function dabbrev--reset-global-variables "dabbrev")
@@ -389,16 +414,18 @@ See the user options `cape-dabbrev-min-length' and
             :category 'cape-dabbrev)
           ,@cape--dabbrev-properties)))))
 
-(defun cape--dabbrev-list (word)
-  "Find all dabbrev expansions for WORD."
+(defun cape--dabbrev-list (input)
+  "Find all dabbrev expansions for INPUT."
   (require 'dabbrev)
   (cape--silent
     (let ((dabbrev-check-other-buffers (not (null cape-dabbrev-check-other-buffers)))
           (dabbrev-check-all-buffers (eq cape-dabbrev-check-other-buffers t)))
       (dabbrev--reset-global-variables))
-    (cl-loop with min-len = (+ cape-dabbrev-min-length (length word))
-             for w in (dabbrev--find-all-expansions word (dabbrev--ignore-case-p word))
-             if (>= (length w) min-len) collect w)))
+    (cl-loop with min-len = (+ cape-dabbrev-min-length (length input))
+             with ic = (dabbrev--ignore-case-p input)
+             for w in (dabbrev--find-all-expansions input ic)
+             if (>= (length w) min-len) collect
+             (cape--case-replace (and ic dabbrev-case-replace) input w))))
 
 ;;;;; cape-dict
 
@@ -415,11 +442,13 @@ See the user options `cape-dabbrev-min-length' and
        (funcall cape-dict-file)
      cape-dict-file)))
 
-(defun cape--dict-grep-words (str)
-  "Return all words from `cape-dict-file' matching STR."
-  (unless (equal str "")
-    (apply #'process-lines-ignore-status
-           "grep" "-Fi" str (cape--dict-file))))
+(defun cape--dict-grep-words (input)
+  "Return all words from `cape-dict-file' matching INPUT."
+  (unless (equal input "")
+    (cape--case-replace-list
+     cape-dict-case-replace input
+     (apply #'process-lines-ignore-status
+            "grep" "-Fi" input (cape--dict-file)))))
 
 (defvar cape--dict-all-words nil)
 (defun cape--dict-all-words ()
@@ -440,14 +469,16 @@ If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
       (cape-interactive #'cape-dict)
-    (let ((bounds (cape--bounds 'word)))
-      `(,(car bounds) ,(cdr bounds)
+    (pcase-let ((`(,beg . ,end) (cape--bounds 'word)))
+      `(,beg ,end
         ,(cape--table-with-properties
           (if cape-dict-grep
-              (cape--cached-table (car bounds) (cdr bounds)
+              (cape--cached-table beg end
                                   #'cape--dict-grep-words
                                   #'string-search)
-            (cape--dict-all-words))
+            (cape--case-replace-list cape-dict-case-replace
+                                     (buffer-substring-no-properties beg end)
+                                     (cape--dict-all-words)))
           :category 'cape-dict)
         ,@cape--dict-properties))))
 
