@@ -80,7 +80,14 @@ one or the other approach is preferable."
   "Preserve case of input.
 See `dabbrev-case-replace' for details."
   :type '(choice (const :tag "off" nil)
-                 (const :tag "based on `case-replace'" case-replace)
+                 (const :tag "use `case-replace'" case-replace)
+                 (other :tag "on" t)))
+
+(defcustom cape-dict-case-fold 'case-replace
+  "Case fold search during search.
+See `dabbrev-case-fold-search' for details."
+  :type '(choice (const :tag "off" nil)
+                 (const :tag "use `case-fold'" case-fold)
                  (other :tag "on" t)))
 
 (defcustom cape-dabbrev-min-length 4
@@ -132,16 +139,20 @@ The buffers are scanned for completion candidates by `cape-line'."
 (defun cape--case-replace-list (flag input strs)
   "Replace case of STRS depending on INPUT and FLAG."
   (if (and (if (eq flag 'case-replace) case-replace flag)
-           (not (equal input "")))
+           (string-match-p "\\`[[:upper:]]" input))
       (mapcar (apply-partially #'cape--case-replace flag input) strs)
     strs))
 
 (defun cape--case-replace (flag input str)
   "Replace case of STR depending on INPUT and FLAG."
   (or (and (if (eq flag 'case-replace) case-replace flag)
-           (not (equal input ""))
            (string-prefix-p input str t)
+           (string-match-p "\\`[[:upper:]]" input)
            (save-match-data
+             ;; Ensure that single character uppercase input does not lead to an
+             ;; all uppercase result.
+             (when (and (= (length input) 1) (> (length str) 1))
+               (setq input (concat input (substring str 1 2))))
              (and (string-match input input)
                   (replace-match str nil nil input))))
       str))
@@ -386,7 +397,7 @@ If INTERACTIVE is nil the function acts like a Capf."
 (defvar dabbrev-check-all-buffers)
 (defvar dabbrev-check-other-buffers)
 (defvar dabbrev-case-replace)
-(declare-function dabbrev--ignore-case-p "dabbrev")
+(defvar dabbrev-case-fold-search)
 (declare-function dabbrev--find-all-expansions "dabbrev")
 (declare-function dabbrev--reset-global-variables "dabbrev")
 
@@ -408,9 +419,11 @@ See the user options `cape-dabbrev-min-length' and
             (end (match-end 0)))
         `(,beg ,end
           ,(cape--table-with-properties
-            (cape--cached-table beg end
-                                #'cape--dabbrev-list
-                                #'string-prefix-p)
+            (completion-table-case-fold
+             (cape--cached-table beg end #'cape--dabbrev-list #'string-prefix-p)
+             (not (if (eq dabbrev-case-fold-search 'case-fold-search)
+                      case-fold-search
+                    dabbrev-case-fold-search)))
             :category 'cape-dabbrev)
           ,@cape--dabbrev-properties)))))
 
@@ -422,7 +435,9 @@ See the user options `cape-dabbrev-min-length' and
           (dabbrev-check-all-buffers (eq cape-dabbrev-check-other-buffers t)))
       (dabbrev--reset-global-variables))
     (cl-loop with min-len = (+ cape-dabbrev-min-length (length input))
-             with ic = (dabbrev--ignore-case-p input)
+             with ic = (if (eq dabbrev-case-fold-search 'case-fold-search)
+                           case-fold-search
+                         dabbrev-case-fold-search)
              for w in (dabbrev--find-all-expansions input ic)
              if (>= (length w) min-len) collect
              (cape--case-replace (and ic dabbrev-case-replace) input w))))
@@ -442,24 +457,25 @@ See the user options `cape-dabbrev-min-length' and
        (funcall cape-dict-file)
      cape-dict-file)))
 
-(defun cape--dict-grep-words (input)
+(defvar cape--dict-all-words nil)
+(defun cape--dict-list (input)
   "Return all words from `cape-dict-file' matching INPUT."
   (unless (equal input "")
     (cape--case-replace-list
      cape-dict-case-replace input
-     (apply #'process-lines-ignore-status
-            "grep" "-Fi" input (cape--dict-file)))))
-
-(defvar cape--dict-all-words nil)
-(defun cape--dict-all-words ()
-  "Load all words from `cape-dict-file'."
-  (or cape--dict-all-words
-      (setq cape--dict-all-words
-            (split-string (with-temp-buffer
-                            (mapc #'insert-file-contents
-                                  (cape--dict-file))
-                            (buffer-string))
-                          "\n" 'omit-nulls))))
+     (if cape-dict-grep
+         (apply #'process-lines-ignore-status
+                "grep" "-Fi" input (cape--dict-file))
+       (unless cape--dict-all-words
+         (setq cape--dict-all-words
+               (split-string (with-temp-buffer
+                               (mapc #'insert-file-contents
+                                     (cape--dict-file))
+                               (buffer-string))
+                             "\n" 'omit-nulls)))
+       (let ((completion-ignore-case t)
+             (completion-regexp-list (list (regexp-quote input))))
+         (all-completions "" cape--dict-all-words))))))
 
 ;;;###autoload
 (defun cape-dict (&optional interactive)
@@ -472,13 +488,11 @@ If INTERACTIVE is nil the function acts like a Capf."
     (pcase-let ((`(,beg . ,end) (cape--bounds 'word)))
       `(,beg ,end
         ,(cape--table-with-properties
-          (if cape-dict-grep
-              (cape--cached-table beg end
-                                  #'cape--dict-grep-words
-                                  #'string-search)
-            (cape--case-replace-list cape-dict-case-replace
-                                     (buffer-substring-no-properties beg end)
-                                     (cape--dict-all-words)))
+          (completion-table-case-fold
+           (cape--cached-table beg end #'cape--dict-list #'string-search)
+           (not (if (eq cape-dict-case-fold 'case-fold-search)
+                    case-fold-search
+                  cape-dict-case-fold)))
           :category 'cape-dict)
         ,@cape--dict-properties))))
 
