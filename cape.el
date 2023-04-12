@@ -8,7 +8,7 @@
 ;; Version: 0.13
 ;; Package-Requires: ((emacs "27.1") (compat "29.1.4.0"))
 ;; Homepage: https://github.com/minad/cape
-;; Keywords: abbrev, convenience, matching, wp
+;; Keywords: abbrev, convenience, matching, completion, wp
 
 ;; This file is part of GNU Emacs.
 
@@ -30,17 +30,18 @@
 ;; Let your completions fly! This package provides additional completion
 ;; backends in the form of Capfs (completion-at-point-functions).
 ;;
-;; cape-dabbrev: Complete word from current buffers
-;; cape-file: Complete file name
-;; cape-history: Complete from Eshell, Comint or minibuffer history
-;; cape-keyword: Complete programming language keyword
-;; cape-symbol: Complete Elisp symbol
-;; cape-abbrev: Complete abbreviation (add-global-abbrev, add-mode-abbrev)
-;; cape-dict: Complete word from dictionary file
-;; cape-line: Complete entire line from file
-;; cape-tex: Complete Unicode char from TeX command, e.g. \hbar.
-;; cape-sgml: Complete Unicode char from SGML entity, e.g., &alpha.
-;; cape-rfc1345: Complete Unicode char using RFC 1345 mnemonics.
+;; `cape-dabbrev': Complete word from current buffers
+;; `cape-elisp-block': Complete Elisp in Org or Markdown code block.
+;; `cape-file': Complete file name
+;; `cape-history': Complete from Eshell, Comint or minibuffer history
+;; `cape-keyword': Complete programming language keyword
+;; `cape-symbol': Complete Elisp symbol
+;; `cape-abbrev': Complete abbreviation (add-global-abbrev, add-mode-abbrev)
+;; `cape-dict': Complete word from dictionary file
+;; `cape-line': Complete entire line from file
+;; `cape-tex': Complete Unicode char from TeX command, e.g. \hbar.
+;; `cape-sgml': Complete Unicode char from SGML entity, e.g., &alpha.
+;; `cape-rfc1345': Complete Unicode char using RFC 1345 mnemonics.
 
 ;;; Code:
 
@@ -386,6 +387,32 @@ If INTERACTIVE is nil the function acts like a Capf."
       `(,beg ,end
         ,(cape--table-with-properties obarray :category 'symbol)
         ,@cape--symbol-properties))))
+
+;;;;; cape-elisp-block
+
+(declare-function org-element-context "org-element")
+(declare-function markdown-code-block-lang "ext:markdown-mode")
+
+;;;###autoload
+(defun cape-elisp-block (&optional interactive)
+  "Complete Elisp in Org or Markdown code block.
+This Capf is particularly useful for literate Emacs configurations.
+If INTERACTIVE is nil the function acts like a Capf."
+  (interactive (list t))
+  (if interactive
+      (cape-interactive #'cape-elisp-block)
+    (when-let ((face (get-text-property (point) 'face))
+               (lang (or (and (if (listp face)
+                                  (memq 'org-block face)
+                                (eq 'org-block face))
+                              (plist-get (cadr (org-element-context)) :language))
+                         (and (if (listp face)
+                                  (memq 'markdown-code-face face)
+                                (eq 'markdown-code-face face))
+                              (save-excursion
+                                (markdown-code-block-lang)))))
+               ((member lang '("elisp" "emacs-lisp"))))
+      (elisp-completion-at-point))))
 
 ;;;;; cape-dabbrev
 
