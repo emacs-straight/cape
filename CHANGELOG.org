@@ -4,11 +4,17 @@
 
 * Development
 
+- Bugfixes
+
+* Version 0.14 (2023-04-13)
+
 - =cape-wrap-buster=, =cape-capf-buster= and =cape-company-to-capf=: The argument
   VALID must be a function taking two arguments, the old and new input. It
   should return nil if the input must be considered invalid such that the
   candidates must be recomputed.
-- =cape-ispell=: Deprecate in favor of =cape-dict=.
+- =cape-ispell=: Deprecate in favor of improved =cape-dict=. Note that =cape-ispell=
+  and =ispell-lookup-words= did not really consult =ispell= or =aspell=, but only grep
+  through the word list specified by =ispell-alternate-dictionary=.
 - =cape-dict-file=: Support multiple dictionary files or a function returning one
   or more files.
 - =cape-dict=, =cape-dabbrev=: Replace case depending on initial input.
