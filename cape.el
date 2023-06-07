@@ -292,6 +292,9 @@ See also `consult-history' for a more flexible variant based on
 
 ;;;;; cape-file
 
+(defvar comint-unquote-function)
+(defvar comint-requote-function)
+
 (defvar cape--file-properties
   (list :annotation-function (lambda (s) (if (string-suffix-p "/" s) " Dir" " File"))
         :company-kind (lambda (s) (if (string-suffix-p "/" s) 'folder 'file))
@@ -305,12 +308,12 @@ See the user option `cape-file-directory-must-exist'.
 If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
-      (let (cape-file-directory-must-exist)
-        (cape-interactive #'cape-file))
+      (cape-interactive '(cape-file-directory-must-exist) #'cape-file)
     (pcase-let* ((default-directory (pcase cape-file-directory
                                       ('nil default-directory)
                                       ((pred stringp) cape-file-directory)
                                       (_ (funcall cape-file-directory))))
+                 ;; TODO: Bounds are not correct in comint/eshell buffers
                  (`(,beg . ,end) (cape--bounds 'filename))
                  (non-essential t)
                  (file (buffer-substring-no-properties beg end))
@@ -322,7 +325,13 @@ If INTERACTIVE is nil the function acts like a Capf."
                 (and (string-search "/" file)
                      (file-exists-p (file-name-directory file))))
         `(,beg ,end
-          ,(cape--nonessential-table #'read-file-name-internal)
+          ,(cape--nonessential-table
+            (if (derived-mode-p 'comint-mode 'eshell-mode)
+                (completion-table-with-quoting
+                 #'read-file-name-internal
+                 comint-unquote-function
+                 comint-requote-function)
+              #'read-file-name-internal))
           ,@(when (or org (string-match-p "./" file))
               '(:company-prefix-length t))
           ,@cape--file-properties)))))
@@ -477,8 +486,7 @@ See the user options `cape-dabbrev-min-length' and
 `cape-dabbrev-check-other-buffers'."
   (interactive (list t))
   (if interactive
-      (let ((cape-dabbrev-min-length 0))
-        (cape-interactive #'cape-dabbrev))
+      (cape-interactive '((cape-dabbrev-min-length 0)) #'cape-dabbrev)
     (when-let ((bounds (cape--dabbrev-bounds)))
       `(,(car bounds) ,(cdr bounds)
         ,(cape--table-with-properties
@@ -814,7 +822,12 @@ changed.  The function `cape-company-to-capf' is experimental."
 ;;;###autoload
 (defun cape-interactive (&rest capfs)
   "Complete interactively with the given CAPFS."
-  (let ((completion-at-point-functions capfs))
+  (let* ((ctx (and (consp (car capfs)) (car capfs)))
+         (capfs (if ctx (cdr capfs) capfs))
+         (completion-at-point-functions
+          (if ctx
+              (mapcar (lambda (fun) `(lambda () (let ,ctx (,fun)))) capfs)
+            capfs)))
     (unless (completion-at-point)
       (user-error "%s: No completions"
                   (mapconcat (lambda (fun)
