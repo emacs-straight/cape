@@ -206,6 +206,9 @@ BODY is the wrapping expression."
 (defvar cape--debug-length 5
   "Length of printed lists in `cape--debug-print'.")
 
+(defvar cape--debug-id 0
+  "Completion table identifier.")
+
 (defun cape--debug-message (&rest msg)
   "Print debug MSG."
   (let ((inhibit-message t))
@@ -714,79 +717,6 @@ If INTERACTIVE is nil the function acts like a Capf."
 
 ;;;; Capf combinators
 
-;;;###autoload
-(defun cape-super-capf (&rest capfs)
-  "Merge CAPFS and return new Capf which includes all candidates.
-The function `cape-super-capf' is experimental."
-  (lambda ()
-    (when-let (results (delq nil (mapcar #'funcall capfs)))
-      (pcase-let* ((`((,beg ,end . ,_)) results)
-                   (cand-ht (make-hash-table :test #'equal))
-                   (tables nil)
-                   (prefix-len nil))
-        (cl-loop for (beg2 end2 . rest) in results do
-                 (when (and (= beg beg2) (= end end2))
-                   (push rest tables)
-                   (let ((plen (plist-get (cdr rest) :company-prefix-length)))
-                     (cond
-                      ((eq plen t)
-                       (setq prefix-len t))
-                      ((and (not prefix-len) (integerp plen))
-                       (setq prefix-len plen))
-                      ((and (integerp prefix-len) (integerp plen))
-                       (setq prefix-len (max prefix-len plen)))))))
-        (setq tables (nreverse tables))
-        `(,beg ,end
-          ,(lambda (str pred action)
-             (pcase action
-               (`(boundaries . ,_) nil)
-               ('metadata
-                '(metadata (category . cape-super)
-                           (display-sort-function . identity)
-                           (cycle-sort-function . identity)))
-               ('t ;; all-completions
-                (let ((ht (make-hash-table :test #'equal))
-                      (candidates nil))
-                  (cl-loop for (table . plist) in tables do
-                           (let* ((pr (if-let (pr (plist-get plist :predicate))
-                                          (if pred
-                                              (lambda (x) (and (funcall pr x) (funcall pred x)))
-                                            pr)
-                                        pred))
-                                  (md (completion-metadata "" table pr))
-                                  (sort (or (completion-metadata-get md 'display-sort-function)
-                                            #'identity))
-                                  (cands (funcall sort (all-completions str table pr))))
-                             (cl-loop for cell on cands
-                                      for cand = (car cell) do
-                                      (if (eq (gethash cand ht t) t)
-                                          (puthash cand plist ht)
-                                        (setcar cell nil)))
-                             (setq candidates (nconc candidates cands))))
-                  (setq cand-ht ht)
-                  (delq nil candidates)))
-               (_ ;; try-completion and test-completion
-                (completion--some
-                 (pcase-lambda (`(,table . ,plist))
-                   (complete-with-action
-                    action table str
-                    (if-let (pr (plist-get plist :predicate))
-                        (if pred
-                            (lambda (x) (and (funcall pr x) (funcall pred x)))
-                          pr)
-                      pred)))
-                 tables))))
-          :exclusive no
-          :company-prefix-length ,prefix-len
-          ,@(mapcan
-             (lambda (prop)
-               (list prop (lambda (cand &rest args)
-                            (when-let (fun (plist-get (gethash cand cand-ht) prop))
-                              (apply fun cand args)))))
-             '(:company-docsig :company-location :company-kind
-               :company-doc-buffer :company-deprecated
-               :annotation-function :exit-function)))))))
-
 (defun cape--company-call (&rest app)
   "Apply APP and handle future return values."
   ;; Backends are non-interruptible. Disable interrupts!
@@ -904,12 +834,86 @@ changed.  The function `cape-company-to-capf' is experimental."
     (if interactive (cape-interactive capf) (funcall capf))))
 
 ;;;###autoload
+(defalias 'cape-super-capf #'cape-capf-super)
+
+;;;###autoload
+(defun cape-wrap-super (&rest capfs)
+  "Call CAPFS and return merged completion result.
+The functions `cape-wrap-super' and `cape-capf-super' are experimental."
+  (when-let ((results (delq nil (mapcar #'funcall capfs))))
+    (pcase-let* ((`((,beg ,end . ,_)) results)
+                 (cand-ht (make-hash-table :test #'equal))
+                 (tables nil)
+                 (prefix-len nil))
+      (cl-loop for (beg2 end2 . rest) in results do
+               (when (and (= beg beg2) (= end end2))
+                 (push rest tables)
+                 (let ((plen (plist-get (cdr rest) :company-prefix-length)))
+                   (cond
+                    ((eq plen t)
+                     (setq prefix-len t))
+                    ((and (not prefix-len) (integerp plen))
+                     (setq prefix-len plen))
+                    ((and (integerp prefix-len) (integerp plen))
+                     (setq prefix-len (max prefix-len plen)))))))
+      (setq tables (nreverse tables))
+      `(,beg ,end
+        ,(lambda (str pred action)
+           (pcase action
+             (`(boundaries . ,_) nil)
+             ('metadata
+              '(metadata (category . cape-super)
+                         (display-sort-function . identity)
+                         (cycle-sort-function . identity)))
+             ('t ;; all-completions
+              (let ((ht (make-hash-table :test #'equal))
+                    (candidates nil))
+                (cl-loop for (table . plist) in tables do
+                         (let* ((pr (if-let (pr (plist-get plist :predicate))
+                                        (if pred
+                                            (lambda (x) (and (funcall pr x) (funcall pred x)))
+                                          pr)
+                                      pred))
+                                (md (completion-metadata "" table pr))
+                                (sort (or (completion-metadata-get md 'display-sort-function)
+                                          #'identity))
+                                (cands (funcall sort (all-completions str table pr))))
+                           (cl-loop for cell on cands
+                                    for cand = (car cell) do
+                                    (if (eq (gethash cand ht t) t)
+                                        (puthash cand plist ht)
+                                      (setcar cell nil)))
+                           (push cands candidates)))
+                (setq cand-ht ht)
+                (delq nil (apply #'nconc (nreverse candidates)))))
+             (_ ;; try-completion and test-completion
+              (cl-loop for (table . plist) in tables thereis
+                       (complete-with-action
+                        action table str
+                        (if-let (pr (plist-get plist :predicate))
+                            (if pred
+                                (lambda (x) (and (funcall pr x) (funcall pred x)))
+                              pr)
+                          pred))))))
+        :exclusive no
+        :company-prefix-length ,prefix-len
+        ,@(mapcan
+           (lambda (prop)
+             (list prop (lambda (cand &rest args)
+                          (when-let (fun (plist-get (gethash cand cand-ht) prop))
+                            (apply fun cand args)))))
+           '(:company-docsig :company-location :company-kind
+             :company-doc-buffer :company-deprecated
+             :annotation-function :exit-function))))))
+
+;;;###autoload
 (defun cape-wrap-debug (capf &optional name)
   "Call CAPF and return a completion table which prints trace messages.
 If CAPF is an anonymous lambda, pass the Capf NAME explicitly for
 meaningful debugging output."
   (unless name
     (setq name (if (symbolp capf) capf "capf")))
+  (setq name (format "%s@%s" name (cl-incf cape--debug-id)))
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
      (let* (completion-ignore-case completion-regexp-list
@@ -927,7 +931,7 @@ meaningful debugging output."
                                  (cape--debug-print (cadr plist-elt)))
                plist-elt (cddr plist-elt)))
        (cape--debug-message
-        "%s() => input=%s:%s:%S table=%s%s"
+        "%s => input=%s:%s:%S table=%s%s"
         name (+ beg 0) (+ end 0) (buffer-substring-no-properties beg end)
         (cape--debug-print cands)
         plist-str))
@@ -1112,6 +1116,8 @@ This function can be used as an advice around an existing Capf."
 (cape--capf-wrapper inside-comment)
 ;;;###autoload (autoload 'cape-capf-inside-string "cape")
 (cape--capf-wrapper inside-string)
+;;;###autoload (autoload 'cape-capf-super "cape")
+(cape--capf-wrapper super)
 ;;;###autoload (autoload 'cape-capf-noninterruptible "cape")
 (cape--capf-wrapper noninterruptible)
 ;;;###autoload (autoload 'cape-capf-nonexclusive "cape")
