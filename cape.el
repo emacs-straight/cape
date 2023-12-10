@@ -88,16 +88,16 @@ See `dabbrev-case-fold-search' for details."
                  (other :tag "on" t)))
 
 (defcustom cape-dabbrev-min-length 4
-  "Minimum length of dabbrev expansions.
+  "Minimum length of Dabbrev expansions.
 This setting ensures that words which are too short
 are not offered as completion candidates, such that
 auto completion does not pop up too aggressively."
   :type 'natnum)
 
 (defcustom cape-dabbrev-check-other-buffers t
-  "Buffers to check for dabbrev.
+  "Buffers to check for Dabbrev.
 
-If t, check all other buffers (subject to dabbrev ignore rules).
+If t, check all other buffers (subject to Dabbrev ignore rules).
 Any other non-nil value only checks some other buffers, as per
 `dabbrev-select-buffers-function'."
   :type '(choice (const :tag "off" nil)
@@ -519,7 +519,7 @@ If INTERACTIVE is nil the function acts like a Capf."
 (declare-function dabbrev--reset-global-variables "dabbrev")
 
 (defun cape--dabbrev-list (input)
-  "Find all dabbrev expansions for INPUT."
+  "Find all Dabbrev expansions for INPUT."
   (cape--silent
     (let ((dabbrev-check-other-buffers (not (null cape-dabbrev-check-other-buffers)))
           (dabbrev-check-all-buffers (eq cape-dabbrev-check-other-buffers t)))
@@ -559,7 +559,7 @@ If INTERACTIVE is nil the function acts like a Capf."
   "Complete with Dabbrev at point.
 
 If INTERACTIVE is nil the function acts like a Capf.  In case you
-observe a performance issue with autocompletion and `cape-dabbrev'
+observe a performance issue with auto-completion and `cape-dabbrev'
 it is strongly recommended to disable scanning in other buffers.
 See the user options `cape-dabbrev-min-length' and
 `cape-dabbrev-check-other-buffers'."
@@ -853,7 +853,7 @@ changed.  The function `cape-company-to-capf' is experimental."
 The functions `cape-wrap-super' and `cape-capf-super' are experimental."
   (when-let ((results (delq nil (mapcar #'funcall capfs))))
     (pcase-let* ((`((,beg ,end . ,_)) results)
-                 (cand-ht (make-hash-table :test #'equal))
+                 (cand-ht nil)
                  (tables nil)
                  (prefix-len nil))
       (cl-loop for (beg2 end2 . rest) in results do
@@ -889,14 +889,15 @@ The functions `cape-wrap-super' and `cape-capf-super' are experimental."
                                 (sort (or (completion-metadata-get md 'display-sort-function)
                                           #'identity))
                                 (cands (funcall sort (all-completions str table pr))))
-                           (cl-loop for cell on cands
-                                    for cand = (car cell) do
-                                    (if (eq (gethash cand ht t) t)
-                                        (puthash cand plist ht)
-                                      (setcar cell nil)))
+                           (cl-loop
+                            for cand in cands do
+                            (if (eq (gethash cand ht t) t)
+                                (puthash cand plist ht)
+                              (setf cand (propertize cand #'cape-capf-super
+                                                     (cons cand plist)))))
                            (push cands candidates)))
                 (setq cand-ht ht)
-                (delq nil (apply #'nconc (nreverse candidates)))))
+                (apply #'nconc (nreverse candidates))))
              (_ ;; try-completion and test-completion
               (cl-loop for (table . plist) in tables thereis
                        (complete-with-action
@@ -911,8 +912,12 @@ The functions `cape-wrap-super' and `cape-capf-super' are experimental."
         ,@(mapcan
            (lambda (prop)
              (list prop (lambda (cand &rest args)
-                          (when-let (fun (plist-get (gethash cand cand-ht) prop))
-                            (apply fun cand args)))))
+                          (let ((ref (get-text-property 0 #'cape-capf-super cand)))
+                            (when-let ((fun (plist-get
+                                             (or (cdr ref)
+                                                 (and cand-ht (gethash cand cand-ht)))
+                                             prop)))
+                              (apply fun (or (car ref) cand) args))))))
            '(:company-docsig :company-location :company-kind
              :company-doc-buffer :company-deprecated
              :annotation-function :exit-function))))))
@@ -1131,7 +1136,7 @@ This function can be used as an advice around an existing Capf."
      `(,beg ,end ,(cape--accept-all-table table) . ,plist))))
 
 (defmacro cape--capf-wrapper (wrapper)
-  "Create a capf transformer from WRAPPER."
+  "Create a Capf transformer from WRAPPER."
   `(defun ,(intern (format "cape-capf-%s" wrapper)) (&rest args)
      (lambda () (apply #',(intern (format "cape-wrap-%s" wrapper)) args))))
 
