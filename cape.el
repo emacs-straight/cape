@@ -1,6 +1,6 @@
 ;;; cape.el --- Completion At Point Extensions -*- lexical-binding: t -*-
 
-;; Copyright (C) 2021-2023 Free Software Foundation, Inc.
+;; Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
 ;; Author: Daniel Mendler <mail@daniel-mendler.de>
 ;; Maintainer: Daniel Mendler <mail@daniel-mendler.de>
@@ -998,7 +998,8 @@ completion table is refreshed on every input change."
                (input (buffer-substring-no-properties beg end)))
           (lambda (str pred action)
             (let ((new-input (buffer-substring-no-properties beg end)))
-              (unless (or (cape--separator-p new-input)
+              (unless (or (not (eq action t))
+                          (cape--separator-p new-input)
                           (funcall valid input new-input))
                 (pcase
                     ;; Reset in case `all-completions' is used inside CAPF

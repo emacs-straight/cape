@@ -1,6 +1,6 @@
 ;;; cape-char.el --- Character completion functions -*- lexical-binding: t -*-
 
-;; Copyright (C) 2021-2023 Free Software Foundation, Inc.
+;; Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -76,7 +76,7 @@ are not included. Hash values are either char or strings."
       " + "))))
 
 (defun cape-char--exit (hash name status)
-  "Exit function given completion status, looks-up NAME in HASH."
+  "Exit function given completion STATUS, looks-up NAME in HASH."
   (when-let (((not (eq status 'exact)))
              (char (gethash name hash)))
     (delete-region (max (point-min) (- (point) (length name))) (point))
