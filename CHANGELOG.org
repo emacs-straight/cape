@@ -2,6 +2,10 @@
 #+author: Daniel Mendler
 #+language: en
 
+* Version 1.2 (2024-01-23)
+
+- =cape-capf-super=: Bugfixes.
+
 * Version 1.1 (2023-12-27)
 
 - =cape-capf-super=, =cape-company-to-capf=: Support duplicate candidates.
