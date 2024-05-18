@@ -1,4 +1,4 @@
-This is docRQPW6P.info, produced by makeinfo version 6.8 from cape.texi.
+This is docu5JnAU.info, produced by makeinfo version 6.8 from cape.texi.
 
 INFO-DIR-SECTION Emacs misc features
 START-INFO-DIR-ENTRY
@@ -6,7 +6,7 @@ START-INFO-DIR-ENTRY
 END-INFO-DIR-ENTRY
 
 
-File: docRQPW6P.info,  Node: Top,  Next: Available Capfs,  Up: (dir)
+File: docu5JnAU.info,  Node: Top,  Next: Available Capfs,  Up: (dir)
 
 cape.el - Let your completions fly!
 ***********************************
@@ -52,7 +52,7 @@ CAPF adapters and transformers
 
 
 
-File: docRQPW6P.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top,  Up: Top
+File: docu5JnAU.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top,  Up: Top
 
 1 Available Capfs
 *****************
@@ -75,7 +75,7 @@ File: docRQPW6P.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top, 
    • ‘cape-tex’: Complete Unicode char from TeX command, e.g.  ‘\hbar’.
 
 
-File: docRQPW6P.info,  Node: Configuration,  Next: CAPF adapters and transformers,  Prev: Available Capfs,  Up: Top
+File: docu5JnAU.info,  Node: Configuration,  Next: CAPF adapters and transformers,  Prev: Available Capfs,  Up: Top
 
 2 Configuration
 ***************
@@ -138,22 +138,22 @@ information.
        ;; used by `completion-at-point'.  The order of the functions matters, the
        ;; first function returning a result wins.  Note that the list of buffer-local
        ;; completion functions takes precedence over the global list.
-       (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-       (add-to-list 'completion-at-point-functions #'cape-file)
-       (add-to-list 'completion-at-point-functions #'cape-elisp-block)
-       ;;(add-to-list 'completion-at-point-functions #'cape-history)
-       ;;(add-to-list 'completion-at-point-functions #'cape-keyword)
-       ;;(add-to-list 'completion-at-point-functions #'cape-tex)
-       ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
-       ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
-       ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
-       ;;(add-to-list 'completion-at-point-functions #'cape-dict)
-       ;;(add-to-list 'completion-at-point-functions #'cape-elisp-symbol)
-       ;;(add-to-list 'completion-at-point-functions #'cape-line)
+       (add-hook 'completion-at-point-functions #'cape-dabbrev)
+       (add-hook 'completion-at-point-functions #'cape-file)
+       (add-hook 'completion-at-point-functions #'cape-elisp-block)
+       ;;(add-hook 'completion-at-point-functions #'cape-history)
+       ;;(add-hook 'completion-at-point-functions #'cape-keyword)
+       ;;(add-hook 'completion-at-point-functions #'cape-tex)
+       ;;(add-hook 'completion-at-point-functions #'cape-sgml)
+       ;;(add-hook 'completion-at-point-functions #'cape-rfc1345)
+       ;;(add-hook 'completion-at-point-functions #'cape-abbrev)
+       ;;(add-hook 'completion-at-point-functions #'cape-dict)
+       ;;(add-hook 'completion-at-point-functions #'cape-elisp-symbol)
+       ;;(add-hook 'completion-at-point-functions #'cape-line)
      )
 
 
-File: docRQPW6P.info,  Node: CAPF adapters and transformers,  Next: Contributions,  Prev: Configuration,  Up: Top
+File: docu5JnAU.info,  Node: CAPF adapters and transformers,  Next: Contributions,  Prev: Configuration,  Up: Top
 
 3 CAPF adapters and transformers
 ********************************
@@ -166,7 +166,7 @@ File: docRQPW6P.info,  Node: CAPF adapters and transformers,  Next: Contribution
 * Capf transformers::
 
 
-File: docRQPW6P.info,  Node: Company adapter,  Next: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
+File: docu5JnAU.info,  Node: Company adapter,  Next: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
 
 3.1 Company adapter
 ===================
@@ -232,7 +232,7 @@ Company backend, which can then be used as a Capf via
                               '(company-dabbrev company-elisp)))))
 
 
-File: docRQPW6P.info,  Node: Super-Capf - Merging multiple Capfs,  Next: Capf-Buster - Cache busting,  Prev: Company adapter,  Up: CAPF adapters and transformers
+File: docu5JnAU.info,  Node: Super-Capf - Merging multiple Capfs,  Next: Capf-Buster - Cache busting,  Prev: Company adapter,  Up: CAPF adapters and transformers
 
 3.2 Super-Capf - Merging multiple Capfs
 =======================================
@@ -275,7 +275,7 @@ multi-step completions like ‘cape-file’.
 Company, which allows you to merge multiple Company backends.
 
 
-File: docRQPW6P.info,  Node: Capf-Buster - Cache busting,  Next: Capf transformers,  Prev: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
+File: docu5JnAU.info,  Node: Capf-Buster - Cache busting,  Next: Capf transformers,  Prev: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
 
 3.3 Capf-Buster - Cache busting
 ===============================
@@ -295,7 +295,7 @@ similarly refreshing strategy.
                  (list (cape-capf-buster #'some-caching-capf)))
 
 
-File: docRQPW6P.info,  Node: Capf transformers,  Prev: Capf-Buster - Cache busting,  Up: CAPF adapters and transformers
+File: docu5JnAU.info,  Node: Capf transformers,  Prev: Capf-Buster - Cache busting,  Up: CAPF adapters and transformers
 
 3.4 Capf transformers
 =====================
@@ -372,7 +372,7 @@ personal configuration.
      ;; pressing RET.
      (defun my-cape-dabbrev-accept-all ()
        (cape-wrap-accept-all #'cape-dabbrev))
-     (add-to-list 'completion-at-point-functions #'my-cape-dabbrev-accept-all)
+     (add-hook 'completion-at-point-functions #'my-cape-dabbrev-accept-all)
 
      ;; Example 6: Define interactive Capf which can be bound to a key.  Here we wrap
      ;; the `elisp-completion-at-point' such that we can complete Elisp code
@@ -387,7 +387,7 @@ personal configuration.
                                             #'ignore-elisp-keywords)))
 
 
-File: docRQPW6P.info,  Node: Contributions,  Prev: CAPF adapters and transformers,  Up: Top
+File: docu5JnAU.info,  Node: Contributions,  Prev: CAPF adapters and transformers,  Up: Top
 
 4 Contributions
 ***************
@@ -402,12 +402,12 @@ Tag Table:
 Node: Top208
 Node: Available Capfs1948
 Node: Configuration3059
-Node: CAPF adapters and transformers6862
-Node: Company adapter7170
-Node: Super-Capf - Merging multiple Capfs9865
-Node: Capf-Buster - Cache busting12134
-Node: Capf transformers13073
-Node: Contributions17838
+Node: CAPF adapters and transformers6826
+Node: Company adapter7134
+Node: Super-Capf - Merging multiple Capfs9829
+Node: Capf-Buster - Cache busting12098
+Node: Capf transformers13037
+Node: Contributions17799
 
 End Tag Table
 
