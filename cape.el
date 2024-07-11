@@ -6,7 +6,7 @@
 ;; Maintainer: Daniel Mendler <mail@daniel-mendler.de>
 ;; Created: 2021
 ;; Version: 1.5
-;; Package-Requires: ((emacs "27.1") (compat "29.1.4.4"))
+;; Package-Requires: ((emacs "27.1") (compat "30"))
 ;; Homepage: https://github.com/minad/cape
 ;; Keywords: abbrev, convenience, matching, completion, text
 
@@ -375,7 +375,7 @@ See also `consult-history' for a more flexible variant based on
       (cond
        ((derived-mode-p 'eshell-mode)
         (setq history eshell-history-ring
-              bol (if (eval-when-compile (< emacs-major-version 30))
+              bol (static-if (< emacs-major-version 30)
                       (save-excursion (eshell-bol) (point))
                     (line-beginning-position))))
        ((derived-mode-p 'comint-mode)
@@ -1270,6 +1270,30 @@ This function can be used as an advice around an existing Capf."
       (lambda (capf &rest args) (lambda () (apply wrapper capf args)))
       (format "Create a %s Capf from CAPF.
 The Capf calls `%s' with CAPF and ARGS as arguments." name wrapper))))
+
+(defvar-keymap cape-prefix-map
+  :doc "Keymap used as completion entry point.
+The keymap should be installed globally under a prefix."
+  "p" #'completion-at-point
+  "t" #'complete-tag
+  "d" #'cape-dabbrev
+  "h" #'cape-history
+  "f" #'cape-file
+  "s" #'cape-elisp-symbol
+  "e" #'cape-elisp-block
+  "a" #'cape-abbrev
+  "l" #'cape-line
+  "w" #'cape-dict
+  "k"  'cape-keyword
+  ":"  'cape-emoji
+  "\\" 'cape-tex
+  "_"  'cape-tex
+  "^"  'cape-tex
+  "&"  'cape-sgml
+  "r"  'cape-rfc1345)
+
+;;;###autoload (autoload 'cape-prefix-map "cape" nil t 'keymap)
+(defalias 'cape-prefix-map cape-prefix-map)
 
 (provide 'cape)
 ;;; cape.el ends here
