@@ -133,6 +133,7 @@ The buffers are scanned for completion candidates by `cape-line'."
 (defcustom cape-elisp-symbol-wrapper
   '((org-mode ?~ ?~)
     (markdown-mode ?` ?`)
+    (emacs-lisp-mode ?` ?')
     (rst-mode "``" "``")
     (log-edit-mode "`" "'")
     (change-log-mode "`" "'")
@@ -465,16 +466,25 @@ If INTERACTIVE is nil the function acts like a Capf."
   "Return t if SYM is bound, fbound or propertized."
   (or (fboundp sym) (boundp sym) (symbol-plist sym)))
 
-(defun cape--symbol-exit (name status)
-  "Wrap symbol NAME with `cape-elisp-symbol-wrapper' buffers.
+(defun cape--symbol-exit (sym status)
+  "Wrap symbol SYM with `cape-elisp-symbol-wrapper' buffers.
 STATUS is the exit status."
   (when-let (((not (eq status 'exact)))
              (c (cl-loop for (m . c) in cape-elisp-symbol-wrapper
-                         if (derived-mode-p m) return c)))
+                         if (derived-mode-p m) return c))
+             ((or (not (derived-mode-p 'emacs-lisp-mode))
+                  ;; Inside comment or string
+                  (let ((s (syntax-ppss))) (or (nth 3 s) (nth 4 s)))))
+             (x (if (stringp (car c)) (car c) (string (car c))))
+             (y (if (stringp (cadr c)) (cadr c) (string (cadr c)))))
     (save-excursion
-      (backward-char (length name))
-      (insert (car c)))
-    (insert (cadr c))))
+      (backward-char (length sym))
+      (unless (save-excursion
+                (and (ignore-errors (or (backward-char (length x)) t))
+                     (looking-at-p (regexp-quote x))))
+        (insert x)))
+    (unless (looking-at-p (regexp-quote y))
+      (insert y))))
 
 (defun cape--symbol-annotation (sym)
   "Return kind of SYM."
@@ -557,22 +567,19 @@ If INTERACTIVE is nil the function acts like a Capf."
 (defun cape--dabbrev-list (input)
   "Find all Dabbrev expansions for INPUT."
   (cape--silent
-    (dlet ((dabbrev-check-other-buffers
-            (and cape-dabbrev-check-other-buffers
-                 (not (functionp cape-dabbrev-check-other-buffers))))
-           (dabbrev-check-all-buffers
-            (eq cape-dabbrev-check-other-buffers t))
-           (dabbrev-search-these-buffers-only
-            (and (functionp cape-dabbrev-check-other-buffers)
-                 (funcall cape-dabbrev-check-other-buffers))))
-      (dabbrev--reset-global-variables)
-      (cons
-       (apply-partially #'string-prefix-p input)
-       (cl-loop with min-len = (+ cape-dabbrev-min-length (length input))
-                with ic = (cape--case-fold-p dabbrev-case-fold-search)
-                for w in (dabbrev--find-all-expansions input ic)
-                if (>= (length w) min-len) collect
-                (cape--case-replace (and ic dabbrev-case-replace) input w))))))
+    (let* ((chk cape-dabbrev-check-other-buffers)
+           (funp (and (not (memq chk '(nil t some))) (functionp chk))))
+      (dlet ((dabbrev-check-other-buffers (and chk (not funp)))
+             (dabbrev-check-all-buffers (eq chk t))
+             (dabbrev-search-these-buffers-only (and funp (funcall chk))))
+        (dabbrev--reset-global-variables)
+        (cons
+         (apply-partially #'string-prefix-p input)
+         (cl-loop with min-len = (+ cape-dabbrev-min-length (length input))
+                  with ic = (cape--case-fold-p dabbrev-case-fold-search)
+                  for w in (dabbrev--find-all-expansions input ic)
+                  if (>= (length w) min-len) collect
+                  (cape--case-replace (and ic dabbrev-case-replace) input w)))))))
 
 (defun cape--dabbrev-bounds ()
   "Return bounds of abbreviation."
@@ -926,7 +933,7 @@ multiple super Capfs in the `completion-at-point-functions':
                     :company-doc-buffer :company-deprecated
                     :annotation-function :exit-function)))
       (cl-loop for (main beg2 end2 table . plist) in results do
-               ;; TODO `cape-capf-super' currently cannot merge Capfs which
+               ;; Note: `cape-capf-super' currently cannot merge Capfs which
                ;; trigger at different beginning positions.  In order to support
                ;; this, take the smallest BEG value and then normalize all
                ;; candidates by prefixing them such that they all start at the
@@ -1153,13 +1160,13 @@ This function can be used as an advice around an existing Capf."
      `(,beg ,end ,(cape--silent-table table) ,@plist))))
 
 ;;;###autoload
-(defun cape-wrap-case-fold (capf &optional dont-fold)
+(defun cape-wrap-case-fold (capf &optional nofold)
   "Call CAPF and return a case-insensitive completion table.
-If DONT-FOLD is non-nil return a case sensitive table instead.
-This function can be used as an advice around an existing Capf."
+If NOFOLD is non-nil return a case sensitive table instead.  This
+function can be used as an advice around an existing Capf."
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
-     `(,beg ,end ,(completion-table-case-fold table dont-fold) ,@plist))))
+     `(,beg ,end ,(completion-table-case-fold table nofold) ,@plist))))
 
 ;;;###autoload
 (defun cape-wrap-noninterruptible (capf)
