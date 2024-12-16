@@ -303,6 +303,7 @@ Table of Contents
     ensure that it does not modify the buffer.
   • `cape-capf-silent', `cape-wrap-silent': Silence Capf messages and
     errors.
+  • `cape-capf-sort', `cape-wrap-sort': Add sort function to a Capf.
   • `cape-capf-super', `cape-wrap-super': Merge multiple Capfs into a
     Super-Capf.
 

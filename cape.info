@@ -1,4 +1,4 @@
-This is docFkxfAa.info, produced by makeinfo version 6.8 from cape.texi.
+This is docwiCl7r.info, produced by makeinfo version 6.8 from cape.texi.
 
 INFO-DIR-SECTION Emacs misc features
 START-INFO-DIR-ENTRY
@@ -6,7 +6,7 @@ START-INFO-DIR-ENTRY
 END-INFO-DIR-ENTRY
 
 
-File: docFkxfAa.info,  Node: Top,  Next: Available Capfs,  Up: (dir)
+File: docwiCl7r.info,  Node: Top,  Next: Available Capfs,  Up: (dir)
 
 cape.el - Let your completions fly!
 ***********************************
@@ -52,7 +52,7 @@ CAPF adapters and transformers
 
 
 
-File: docFkxfAa.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top,  Up: Top
+File: docwiCl7r.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top,  Up: Top
 
 1 Available Capfs
 *****************
@@ -75,7 +75,7 @@ File: docFkxfAa.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top, 
    • ‘cape-tex’: Complete Unicode char from TeX command, e.g.  ‘\hbar’.
 
 
-File: docFkxfAa.info,  Node: Configuration,  Next: CAPF adapters and transformers,  Prev: Available Capfs,  Up: Top
+File: docwiCl7r.info,  Node: Configuration,  Next: CAPF adapters and transformers,  Prev: Available Capfs,  Up: Top
 
 2 Configuration
 ***************
@@ -135,7 +135,7 @@ information.
      )
 
 
-File: docFkxfAa.info,  Node: CAPF adapters and transformers,  Next: Contributions,  Prev: Configuration,  Up: Top
+File: docwiCl7r.info,  Node: CAPF adapters and transformers,  Next: Contributions,  Prev: Configuration,  Up: Top
 
 3 CAPF adapters and transformers
 ********************************
@@ -148,7 +148,7 @@ File: docFkxfAa.info,  Node: CAPF adapters and transformers,  Next: Contribution
 * Capf transformers::
 
 
-File: docFkxfAa.info,  Node: Company adapter,  Next: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
+File: docwiCl7r.info,  Node: Company adapter,  Next: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
 
 3.1 Company adapter
 ===================
@@ -214,7 +214,7 @@ Company backend, which can then be used as a Capf via
                               '(company-dabbrev company-elisp)))))
 
 
-File: docFkxfAa.info,  Node: Super-Capf - Merging multiple Capfs,  Next: Capf-Buster - Cache busting,  Prev: Company adapter,  Up: CAPF adapters and transformers
+File: docwiCl7r.info,  Node: Super-Capf - Merging multiple Capfs,  Next: Capf-Buster - Cache busting,  Prev: Company adapter,  Up: CAPF adapters and transformers
 
 3.2 Super-Capf - Merging multiple Capfs
 =======================================
@@ -256,7 +256,7 @@ multi-step completions like ‘cape-file’.
 Company, which allows you to merge multiple Company backends.
 
 
-File: docFkxfAa.info,  Node: Capf-Buster - Cache busting,  Next: Capf transformers,  Prev: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
+File: docwiCl7r.info,  Node: Capf-Buster - Cache busting,  Next: Capf transformers,  Prev: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
 
 3.3 Capf-Buster - Cache busting
 ===============================
@@ -276,7 +276,7 @@ similarly refreshing strategy.
                  (list (cape-capf-buster #'some-caching-capf)))
 
 
-File: docFkxfAa.info,  Node: Capf transformers,  Prev: Capf-Buster - Cache busting,  Up: CAPF adapters and transformers
+File: docwiCl7r.info,  Node: Capf transformers,  Prev: Capf-Buster - Cache busting,  Up: CAPF adapters and transformers
 
 3.4 Capf transformers
 =====================
@@ -320,6 +320,7 @@ function symbol.
      ensure that it does not modify the buffer.
    • ‘cape-capf-silent’, ‘cape-wrap-silent’: Silence Capf messages and
      errors.
+   • ‘cape-capf-sort’, ‘cape-wrap-sort’: Add sort function to a Capf.
    • ‘cape-capf-super’, ‘cape-wrap-super’: Merge multiple Capfs into a
      Super-Capf.
 
@@ -368,7 +369,7 @@ personal configuration.
                                             #'ignore-elisp-keywords)))
 
 
-File: docFkxfAa.info,  Node: Contributions,  Prev: CAPF adapters and transformers,  Up: Top
+File: docwiCl7r.info,  Node: Contributions,  Prev: CAPF adapters and transformers,  Up: Top
 
 4 Contributions
 ***************
@@ -388,7 +389,7 @@ Node: Company adapter6175
 Node: Super-Capf - Merging multiple Capfs8870
 Node: Capf-Buster - Cache busting11051
 Node: Capf transformers11990
-Node: Contributions16740
+Node: Contributions16820
 
 End Tag Table
 
