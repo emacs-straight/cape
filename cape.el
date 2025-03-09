@@ -67,6 +67,11 @@
   "Maximal number of completion candidates returned by `cape-dict'."
   :type '(choice (const nil) natnum))
 
+(defcustom cape-dict-grep t
+  "Filter the dictionary via grep instead of in Lisp.
+It may be beneficial to disable this setting depending on your system."
+  :type 'boolean)
+
 (defcustom cape-dict-file "/usr/share/dict/words"
   "Path to dictionary word list file.
 This variable can also be a list of paths or
@@ -617,6 +622,8 @@ See the user options `cape-dabbrev-min-length' and
         :category 'cape-dict)
   "Completion extra properties for `cape-dict'.")
 
+(defvar cape--dict-cache nil)
+
 (defun cape--dict-list (input)
   "Return all words from `cape-dict-file' matching INPUT."
   (let* ((inhibit-message t)
@@ -626,18 +633,38 @@ See the user options `cape-dabbrev-min-length' and
                    (file-directory-p default-directory))
               default-directory
             user-emacs-directory))
-         (files (mapcar #'expand-file-name
-                        (ensure-list
-                         (if (functionp cape-dict-file)
-                             (funcall cape-dict-file)
-                           cape-dict-file))))
-         (words
-          (apply #'process-lines-ignore-status
-                 "grep"
-                 (concat "-Fh"
-                         (and (cape--case-fold-p cape-dict-case-fold) "i")
-                         (and cape-dict-limit (format "m%d" cape-dict-limit)))
-                 input files)))
+         (files (sort (mapcar #'expand-file-name
+                              (ensure-list
+                               (if (functionp cape-dict-file)
+                                   (funcall cape-dict-file)
+                                 cape-dict-file)))
+                      #'string<))
+         (words nil))
+    (if cape-dict-grep
+        (setq words (apply #'process-lines-ignore-status
+                           "grep"
+                           (concat "-Fh"
+                                   (and (cape--case-fold-p cape-dict-case-fold) "i")
+                                   (and cape-dict-limit (format "m%d" cape-dict-limit)))
+                           input files))
+      (let ((completion-ignore-case (cape--case-fold-p cape-dict-case-fold))
+            (completion-regexp-list (list (regexp-quote input)))
+            (count 0))
+        (catch 'limit
+          (all-completions
+           ""
+           (with-memoization (alist-get files cape--dict-cache nil nil #'equal)
+             (with-temp-buffer
+               (dolist (file files)
+                 (insert-file-contents file)
+                 (insert "\n"))
+               (split-string (buffer-string) "[\r\n]+" t)))
+           (lambda (word)
+             (when cape-dict-limit
+               (when (>= count cape-dict-limit) (throw 'limit nil))
+               (cl-incf count))
+             (push word words)
+             nil)))))
     (cons
      (apply-partially
       (if (and cape-dict-limit (length= words cape-dict-limit))
@@ -811,10 +838,11 @@ again if the input prefix changed."
       (funcall backend 'init)
       (put backend 'company-init t)
       (setf (alist-get backend cape--company-init) t))
-    (when-let ((prefix (cape--company-call backend 'prefix))
-               (initial-input (if (stringp prefix) prefix (car-safe prefix))))
-      (let* ((end (point)) (beg (- end (length initial-input)))
-             (valid (if (cape--company-call backend 'no-cache initial-input)
+    (when-let ((pre (pcase (cape--company-call backend 'prefix)
+                      ((or `(,p ,_s) (and (pred stringp) p)) (cons p (length p)))
+                      ((or `(,p ,_s ,l) `(,p . ,l)) (cons p l)))))
+      (let* ((end (point)) (beg (- end (length (car pre))))
+             (valid (if (cape--company-call backend 'no-cache (car pre))
                         #'equal (or valid #'string-prefix-p)))
              (sort-fun (and (cape--company-call backend 'sorted) #'identity))
              restore-props)
@@ -835,7 +863,7 @@ again if the input prefix changed."
                     (cons (apply-partially valid input) cands)))))
               :category backend
               :exclusive 'no
-              :company-prefix-length (cdr-safe prefix)
+              :company-prefix-length (cdr pre)
               :company-doc-buffer (lambda (x) (cape--company-call backend 'doc-buffer x))
               :company-location (lambda (x) (cape--company-call backend 'location x))
               :company-docsig (lambda (x) (cape--company-call backend 'meta x))
