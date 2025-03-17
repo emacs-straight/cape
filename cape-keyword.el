@@ -387,6 +387,7 @@
     (go-ts-mode go-mode)
     (java-ts-mode java-mode)
     (js-ts-mode javascript-mode)
+    (lua-ts-mode lua-mode)
     (python-ts-mode python-mode)
     (ruby-ts-mode ruby-mode)
     (rust-ts-mode rust-mode))
@@ -396,7 +397,12 @@
 
 (defun cape--keyword-list ()
   "Return keywords for current major mode."
-  (when-let (kw (alist-get major-mode cape-keyword-list))
+  (when-let ((kw (or (alist-get major-mode cape-keyword-list)
+                     (when-let (((eval-when-compile (> emacs-major-version 28)))
+                                (remap (rassq
+                                        major-mode
+                                        (bound-and-true-p major-mode-remap-alist))))
+                       (alist-get (car remap) cape-keyword-list)))))
     (if (symbolp (car kw)) (alist-get (car kw) cape-keyword-list) kw)))
 
 (defvar cape--keyword-properties
