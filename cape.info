@@ -1,4 +1,4 @@
-This is doclJJVru.info, produced by makeinfo version 6.8 from cape.texi.
+This is docgFsdfo.info, produced by makeinfo version 6.8 from cape.texi.
 
 INFO-DIR-SECTION Emacs misc features
 START-INFO-DIR-ENTRY
@@ -6,7 +6,7 @@ START-INFO-DIR-ENTRY
 END-INFO-DIR-ENTRY
 
 
-File: doclJJVru.info,  Node: Top,  Next: Available Capfs,  Up: (dir)
+File: docgFsdfo.info,  Node: Top,  Next: Available Capfs,  Up: (dir)
 
 cape.el - Let your completions fly!
 ***********************************
@@ -52,7 +52,7 @@ CAPF adapters and transformers
 
 
 
-File: doclJJVru.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top,  Up: Top
+File: docgFsdfo.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top,  Up: Top
 
 1 Available Capfs
 *****************
@@ -60,11 +60,11 @@ File: doclJJVru.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top, 
    • ‘cape-abbrev’: Complete abbreviation (‘add-global-abbrev’,
      ‘add-mode-abbrev’).
    • ‘cape-dabbrev’: Complete word from current buffers.  See also
-     ‘dabbrev-capf’ on Emacs 29.
+     ‘dabbrev-capf’.
    • ‘cape-dict’: Complete word from dictionary file.
    • ‘cape-elisp-block’: Complete Elisp in Org or Markdown code block.
    • ‘cape-elisp-symbol’: Complete Elisp symbol.
-   • ‘cape-emoji’: Complete Emoji.  Available on Emacs 29 and newer.
+   • ‘cape-emoji’: Complete Emoji.
    • ‘cape-file’: Complete file name.
    • ‘cape-history’: Complete from Eshell, Comint or minibuffer history.
    • ‘cape-keyword’: Complete programming language keyword.
@@ -75,7 +75,7 @@ File: doclJJVru.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top, 
    • ‘cape-tex’: Complete Unicode char from TeX command, e.g.  ‘\hbar’.
 
 
-File: doclJJVru.info,  Node: Configuration,  Next: CAPF adapters and transformers,  Prev: Available Capfs,  Up: Top
+File: docgFsdfo.info,  Node: Configuration,  Next: CAPF adapters and transformers,  Prev: Available Capfs,  Up: Top
 
 2 Configuration
 ***************
@@ -135,7 +135,7 @@ information.
      )
 
 
-File: doclJJVru.info,  Node: CAPF adapters and transformers,  Next: Contributions,  Prev: Configuration,  Up: Top
+File: docgFsdfo.info,  Node: CAPF adapters and transformers,  Next: Contributions,  Prev: Configuration,  Up: Top
 
 3 CAPF adapters and transformers
 ********************************
@@ -148,7 +148,7 @@ File: doclJJVru.info,  Node: CAPF adapters and transformers,  Next: Contribution
 * Capf transformers::
 
 
-File: doclJJVru.info,  Node: Company adapter,  Next: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
+File: docgFsdfo.info,  Node: Company adapter,  Next: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
 
 3.1 Company adapter
 ===================
@@ -214,7 +214,7 @@ Company backend, which can then be used as a Capf via
                               '(company-dabbrev company-elisp)))))
 
 
-File: doclJJVru.info,  Node: Super-Capf - Merging multiple Capfs,  Next: Capf-Buster - Cache busting,  Prev: Company adapter,  Up: CAPF adapters and transformers
+File: docgFsdfo.info,  Node: Super-Capf - Merging multiple Capfs,  Next: Capf-Buster - Cache busting,  Prev: Company adapter,  Up: CAPF adapters and transformers
 
 3.2 Super-Capf - Merging multiple Capfs
 =======================================
@@ -256,7 +256,7 @@ multi-step completions like ‘cape-file’.
 Company, which allows you to merge multiple Company backends.
 
 
-File: doclJJVru.info,  Node: Capf-Buster - Cache busting,  Next: Capf transformers,  Prev: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
+File: docgFsdfo.info,  Node: Capf-Buster - Cache busting,  Next: Capf transformers,  Prev: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
 
 3.3 Capf-Buster - Cache busting
 ===============================
@@ -276,7 +276,7 @@ similarly refreshing strategy.
                  (list (cape-capf-buster #'some-caching-capf)))
 
 
-File: doclJJVru.info,  Node: Capf transformers,  Prev: Capf-Buster - Cache busting,  Up: CAPF adapters and transformers
+File: docgFsdfo.info,  Node: Capf transformers,  Prev: Capf-Buster - Cache busting,  Up: CAPF adapters and transformers
 
 3.4 Capf transformers
 =====================
@@ -330,25 +330,18 @@ issue tracker (https://github.com/minad/corfu/issues) or the Corfu wiki.
 (https://github.com/minad/corfu/wiki) I use some of these tweaks in my
 personal configuration.
 
-     ;; Example 1: Sanitize the `pcomplete-completions-at-point' Capf.  The Capf has
-     ;; undesired side effects on Emacs 28.  These advices are not needed on Emacs 29
-     ;; and newer.
-     (when (< emacs-major-version 29)
-       (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
-       (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify))
-
-     ;; Example 2: Configure a Capf with a specific auto completion prefix length
+     ;; Example 1: Configure a Capf with a specific auto completion prefix length
      (setq-local completion-at-point-functions
                  (list (cape-capf-prefix-length #'cape-dabbrev 2)))
 
-     ;; Example 3: Create a Capf with debugging messages
+     ;; Example 2: Create a Capf with debugging messages
      (setq-local completion-at-point-functions (list (cape-capf-debug #'cape-dict)))
 
-     ;; Example 4: Named Capf
+     ;; Example 3: Named Capf
      (defalias 'cape-dabbrev-min-2 (cape-capf-prefix-length #'cape-dabbrev 2))
      (setq-local completion-at-point-functions (list #'cape-dabbrev-min-2))
 
-     ;; Example 5: Define a defensive Dabbrev Capf, which accepts all inputs.  If you
+     ;; Example 4: Define a defensive Dabbrev Capf, which accepts all inputs.  If you
      ;; use Corfu and `corfu-auto=t', the first candidate won't be auto selected if
      ;; `corfu-preselect=valid', such that it cannot be accidentally committed when
      ;; pressing RET.
@@ -356,20 +349,26 @@ personal configuration.
        (cape-wrap-accept-all #'cape-dabbrev))
      (add-hook 'completion-at-point-functions #'my-cape-dabbrev-accept-all)
 
-     ;; Example 6: Define interactive Capf which can be bound to a key.  Here we wrap
+     ;; Example 5: Define interactive Capf which can be bound to a key.  Here we wrap
      ;; the `elisp-completion-at-point' such that we can complete Elisp code
      ;; explicitly in arbitrary buffers.
      (keymap-global-set "C-c p e" (cape-capf-interactive #'elisp-completion-at-point))
 
-     ;; Example 7: Ignore :keywords in Elisp completion.
+     ;; Example 6: Ignore :keywords in Elisp completion.
      (defun ignore-elisp-keywords (sym)
        (not (keywordp sym)))
      (setq-local completion-at-point-functions
                  (list (cape-capf-predicate #'elisp-completion-at-point
                                             #'ignore-elisp-keywords)))
 
+     ;; Example 7: Sanitize broken Capfs. Catch errors with `cape-wrap-silent' or
+     ;; make sure that the Capf does not modify the buffer itself.
+     (advice-add 'dabbrev-capf :around #'cape-wrap-silent)
+     (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent) ;; Was necessary on Emacs 28
+     (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify) ;; Was necessary on Emacs 28
+
 
-File: doclJJVru.info,  Node: Contributions,  Prev: CAPF adapters and transformers,  Up: Top
+File: docgFsdfo.info,  Node: Contributions,  Prev: CAPF adapters and transformers,  Up: Top
 
 4 Contributions
 ***************
@@ -383,13 +382,13 @@ copyright assignment to the FSF.
 Tag Table:
 Node: Top208
 Node: Available Capfs1948
-Node: Configuration3059
-Node: CAPF adapters and transformers5867
-Node: Company adapter6175
-Node: Super-Capf - Merging multiple Capfs8870
-Node: Capf-Buster - Cache busting11051
-Node: Capf transformers11990
-Node: Contributions16820
+Node: Configuration3013
+Node: CAPF adapters and transformers5821
+Node: Company adapter6129
+Node: Super-Capf - Merging multiple Capfs8824
+Node: Capf-Buster - Cache busting11005
+Node: Capf transformers11944
+Node: Contributions16807
 
 End Tag Table
 
