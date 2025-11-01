@@ -1,4 +1,4 @@
-This is docqdpmrD.info, produced by makeinfo version 6.8 from cape.texi.
+This is docSEWOAA.info, produced by makeinfo version 6.8 from cape.texi.
 
 INFO-DIR-SECTION Emacs misc features
 START-INFO-DIR-ENTRY
@@ -6,7 +6,7 @@ START-INFO-DIR-ENTRY
 END-INFO-DIR-ENTRY
 
 
-File: docqdpmrD.info,  Node: Top,  Next: Available Capfs,  Up: (dir)
+File: docSEWOAA.info,  Node: Top,  Next: Available Capfs,  Up: (dir)
 
 cape.el - Let your completions fly!
 ***********************************
@@ -52,7 +52,7 @@ CAPF adapters and transformers
 
 
 
-File: docqdpmrD.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top,  Up: Top
+File: docSEWOAA.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top,  Up: Top
 
 1 Available Capfs
 *****************
@@ -75,7 +75,7 @@ File: docqdpmrD.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top, 
    • ‘cape-tex’: Complete Unicode char from TeX command, e.g.  ‘\hbar’.
 
 
-File: docqdpmrD.info,  Node: Configuration,  Next: CAPF adapters and transformers,  Prev: Available Capfs,  Up: Top
+File: docSEWOAA.info,  Node: Configuration,  Next: CAPF adapters and transformers,  Prev: Available Capfs,  Up: Top
 
 2 Configuration
 ***************
@@ -135,7 +135,7 @@ information.
      )
 
 
-File: docqdpmrD.info,  Node: CAPF adapters and transformers,  Next: Contributions,  Prev: Configuration,  Up: Top
+File: docSEWOAA.info,  Node: CAPF adapters and transformers,  Next: Contributions,  Prev: Configuration,  Up: Top
 
 3 CAPF adapters and transformers
 ********************************
@@ -148,7 +148,7 @@ File: docqdpmrD.info,  Node: CAPF adapters and transformers,  Next: Contribution
 * Capf transformers::
 
 
-File: docqdpmrD.info,  Node: Company adapter,  Next: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
+File: docSEWOAA.info,  Node: Company adapter,  Next: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
 
 3.1 Company adapter
 ===================
@@ -214,7 +214,7 @@ Company backend, which can then be used as a Capf via
                               '(company-dabbrev company-elisp)))))
 
 
-File: docqdpmrD.info,  Node: Super-Capf - Merging multiple Capfs,  Next: Capf-Buster - Cache busting,  Prev: Company adapter,  Up: CAPF adapters and transformers
+File: docSEWOAA.info,  Node: Super-Capf - Merging multiple Capfs,  Next: Capf-Buster - Cache busting,  Prev: Company adapter,  Up: CAPF adapters and transformers
 
 3.2 Super-Capf - Merging multiple Capfs
 =======================================
@@ -256,7 +256,7 @@ multi-step completions like ‘cape-file’.
 Company, which allows you to merge multiple Company backends.
 
 
-File: docqdpmrD.info,  Node: Capf-Buster - Cache busting,  Next: Capf transformers,  Prev: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
+File: docSEWOAA.info,  Node: Capf-Buster - Cache busting,  Next: Capf transformers,  Prev: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
 
 3.3 Capf-Buster - Cache busting
 ===============================
@@ -276,7 +276,7 @@ similarly refreshing strategy.
                  (list (cape-capf-buster #'some-caching-capf)))
 
 
-File: docqdpmrD.info,  Node: Capf transformers,  Prev: Capf-Buster - Cache busting,  Up: CAPF adapters and transformers
+File: docSEWOAA.info,  Node: Capf transformers,  Prev: Capf-Buster - Cache busting,  Up: CAPF adapters and transformers
 
 3.4 Capf transformers
 =====================
@@ -316,8 +316,6 @@ function symbol.
      minimal prefix length.
    • ‘cape-capf-properties’, ‘cape-wrap-properties’: Add completion
      properties to a Capf.
-   • ‘cape-capf-purify’, ‘cape-wrap-purify’: Purify a broken Capf and
-     ensure that it does not modify the buffer.
    • ‘cape-capf-silent’, ‘cape-wrap-silent’: Silence Capf messages and
      errors.
    • ‘cape-capf-sort’, ‘cape-wrap-sort’: Add sort function to a Capf.
@@ -361,14 +359,12 @@ personal configuration.
                  (list (cape-capf-predicate #'elisp-completion-at-point
                                             #'ignore-elisp-keywords)))
 
-     ;; Example 7: Sanitize broken Capfs. Catch errors with `cape-wrap-silent' or
-     ;; make sure that the Capf does not modify the buffer itself.
+     ;; Example 7: Catch errors with `cape-wrap-silent'.
      (advice-add 'dabbrev-capf :around #'cape-wrap-silent)
      (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent) ;; Was necessary on Emacs 28
-     (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify) ;; Was necessary on Emacs 28
 
 
-File: docqdpmrD.info,  Node: Contributions,  Prev: CAPF adapters and transformers,  Up: Top
+File: docSEWOAA.info,  Node: Contributions,  Prev: CAPF adapters and transformers,  Up: Top
 
 4 Contributions
 ***************
@@ -388,7 +384,7 @@ Node: Company adapter6129
 Node: Super-Capf - Merging multiple Capfs8824
 Node: Capf-Buster - Cache busting11005
 Node: Capf transformers11944
-Node: Contributions16807
+Node: Contributions16481
 
 End Tag Table
 
