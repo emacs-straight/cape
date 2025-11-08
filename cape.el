@@ -582,21 +582,22 @@ If INTERACTIVE is nil the function acts like a Capf."
     (require 'dabbrev))
   (let ((re (or dabbrev-abbrev-char-regexp "\\sw\\|\\s_"))
         (limit (minibuffer-prompt-end)))
-    (when (or (looking-at re)
-              (and (> (point) limit)
-                   (save-excursion (forward-char -1) (looking-at re))))
-      (cons (save-excursion
-              (while (and (> (point) limit)
-                          (save-excursion (forward-char -1) (looking-at re)))
-                (forward-char -1))
-              (when dabbrev-abbrev-skip-leading-regexp
-                (while (looking-at dabbrev-abbrev-skip-leading-regexp)
-                  (forward-char 1)))
-              (point))
-            (save-excursion
-              (while (looking-at re)
-                (forward-char 1))
-              (point))))))
+    (if (or (looking-at re)
+            (and (> (point) limit)
+                 (save-excursion (forward-char -1) (looking-at re))))
+        (cons (save-excursion
+                (while (and (> (point) limit)
+                            (save-excursion (forward-char -1) (looking-at re)))
+                  (forward-char -1))
+                (when dabbrev-abbrev-skip-leading-regexp
+                  (while (looking-at dabbrev-abbrev-skip-leading-regexp)
+                    (forward-char 1)))
+                (point))
+              (save-excursion
+                (while (looking-at re)
+                  (forward-char 1))
+                (point)))
+      (cons (point) (point)))))
 
 ;;;###autoload
 (defun cape-dabbrev (&optional interactive)
@@ -609,10 +610,10 @@ See the user option `cape-dabbrev-buffer-function'."
   (interactive (list t))
   (if interactive
       (cape-interactive #'cape-dabbrev)
-    (when-let ((bounds (cape--dabbrev-bounds)))
-      `(,(car bounds) ,(cdr bounds)
+    (pcase-let ((`(,beg . ,end) (cape--dabbrev-bounds)))
+      `(,beg ,end
         ,(completion-table-case-fold
-          (cape--dynamic-table (car bounds) (cdr bounds) #'cape--dabbrev-list)
+          (cape--dynamic-table beg end #'cape--dabbrev-list)
           (not (cape--case-fold-p dabbrev-case-fold-search)))
         ,@cape--dabbrev-properties))))
 
@@ -882,6 +883,12 @@ again if the input prefix changed."
     (interactive (list t))
     (if interactive (cape-interactive capf) (funcall capf))))
 
+(defvar cape--super-functions
+  '( :company-docsig :company-location :company-kind
+     :company-doc-buffer :company-deprecated
+     :annotation-function :exit-function)
+  "List of extra functions which are handled by `cape-wrap-super'.")
+
 ;;;###autoload
 (defun cape-wrap-super (&rest capfs)
   "Call CAPFS and return merged completion result.
@@ -892,7 +899,7 @@ result.  Such behavior is useful when listing multiple super Capfs in
 the `completion-at-point-functions':
 
   (setq completion-at-point-functions
-        (list (cape-capf-super \\='eglot-completion-at-point
+        (list (cape-capf-super \\='elisp-completion-at-point
                                :with \\='tempel-complete)
               (cape-capf-super \\='cape-dabbrev
                                :with \\='tempel-complete)))"
@@ -907,11 +914,7 @@ the `completion-at-point-functions':
                  (cand-ht nil)
                  (tables nil)
                  (exclusive nil)
-                 (prefix-len nil)
-                 (cand-functions
-                  '( :company-docsig :company-location :company-kind
-                     :company-doc-buffer :company-deprecated
-                     :annotation-function :exit-function)))
+                 (prefix-len nil))
       (cl-loop for (main beg2 end2 table . plist) in results do
                ;; Note: `cape-capf-super' currently cannot merge Capfs which
                ;; trigger at different beginning positions.  In order to support
@@ -924,7 +927,7 @@ the `completion-at-point-functions':
                              (mapcan (lambda (f)
                                        (when-let ((v (plist-get plist f)))
                                          (list f v)))
-                                     cand-functions))
+                                     cape--super-functions))
                        tables)
                  ;; The resulting merged Capf is exclusive if one of the main
                  ;; Capfs is exclusive.
@@ -987,10 +990,10 @@ the `completion-at-point-functions':
                          (if (and table-pred pred)
                              (lambda (x) (and (funcall table-pred x) (funcall pred x)))
                            (or table-pred pred)))))))
-         :company-prefix-length ,prefix-len
          :category cape-super
-         :display-sort-function identity
-         :cycle-sort-function identity
+         :company-prefix-length ,prefix-len
+         :display-sort-function ,#'identity
+         :cycle-sort-function ,#'identity
          ,@(and (not exclusive) '(:exclusive no))
          ,@(mapcan
             (lambda (prop)
@@ -1002,7 +1005,7 @@ the `completion-at-point-functions':
                         (when-let ((plist (and cand-ht (gethash cand cand-ht)))
                                    (fun (plist-get plist prop)))
                           (apply fun cand args))))))
-            cand-functions)))))
+            cape--super-functions)))))
 
 ;;;###autoload
 (defun cape-wrap-debug (capf &optional name)
@@ -1086,7 +1089,8 @@ completion table is refreshed on every input change."
 
 ;;;###autoload
 (defun cape-wrap-passthrough (capf)
-  "Call CAPF and make sure that no completion style filtering takes place."
+  "Call CAPF and make sure that no completion style filtering takes place.
+This function can be used as an advice around an existing Capf."
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
      `(,beg ,end ,(cape--passthrough-table table) ,@plist))))
@@ -1110,9 +1114,11 @@ This function can be used as an advice around an existing Capf."
   (cape-wrap-properties capf :exclusive 'no))
 
 ;;;###autoload
-(defun cape-wrap-sort (capf sort)
-  "Call CAPF and add SORT function.
-This function can be used as an advice around an existing Capf."
+(defun cape-wrap-sort (capf &optional sort)
+  "Call CAPF and add SORT function as completion metadata.
+If the SORT argument is nil or not given, the completion UI will use
+its own default sorting algorithm.  This function can be used as an
+advice around an existing Capf."
   (cape-wrap-properties
    capf
    :display-sort-function sort
@@ -1176,8 +1182,7 @@ If the prefix is long enough, enforce auto completion."
 
 ;;;###autoload
 (defun cape-wrap-inside-faces (capf &rest faces)
-  "Call CAPF only if inside FACES.
-This function can be used as an advice around an existing Capf."
+  "Call CAPF only if inside FACES."
   (when-let (((> (point) (point-min)))
              (fs (get-text-property (1- (point)) 'face))
              ((if (listp fs)
@@ -1212,6 +1217,36 @@ This function can be used as an advice around an existing Capf."
     (`(,beg ,end ,table . ,plist)
      `(,beg ,end ,(cape--accept-all-table table) . ,plist))))
 
+(defvar cape--trigger-syntax-table (make-syntax-table (syntax-table))
+  "Syntax table used for the trigger character.")
+
+;;;###autoload
+(defun cape-wrap-trigger (capf trigger)
+  "Ensure that TRIGGER character occurs before point and then call CAPF.
+Example:
+  (setq completion-at-point-functions
+      (list (cape-capf-trigger \\='cape-abbrev ?/)))"
+  (when-let ((pos (save-excursion (search-backward (char-to-string trigger) (pos-bol) 'noerror)))
+             ((save-excursion (not (re-search-backward "\\s-" pos 'noerror)))))
+    (pcase
+        ;; Treat the trigger character as punctuation.
+        (with-syntax-table cape--trigger-syntax-table
+          (unless (eq (char-syntax trigger) ?.)
+            (modify-syntax-entry trigger "."))
+          (funcall capf))
+      (`(,beg ,end ,table . ,plist)
+       (when (<= pos beg (1+ pos))
+         `( ,(1+ pos) ,end ,table
+            :company-prefix-length t
+            :exit-function
+            ,(let ((pos (copy-marker pos))
+                   (end (copy-marker (1+ pos))))
+               (lambda (str status)
+                 (delete-region pos end)
+                 (when-let ((exit (plist-get plist :exit-function)))
+                   (funcall exit str status))))
+            . ,plist))))))
+
 ;;;###autoload (autoload 'cape-capf-purify "cape")
 ;;;###autoload
 (defun cape-wrap-purify (capf)
@@ -1238,12 +1273,13 @@ This function can be used as an advice around an existing Capf."
                        #'cape-wrap-passthrough #'cape-wrap-predicate
                        #'cape-wrap-prefix-length #'cape-wrap-properties
                        'cape-wrap-purify #'cape-wrap-silent
-                       #'cape-wrap-sort #'cape-wrap-super))
+                       #'cape-wrap-sort #'cape-wrap-super #'cape-wrap-trigger))
   (let ((name (string-remove-prefix "cape-wrap-" (symbol-name wrapper))))
     (defalias (intern (format "cape-capf-%s" name))
       (lambda (capf &rest args) (lambda () (apply wrapper capf args)))
       (format "Create a %s Capf from CAPF.
-The Capf calls `%s' with CAPF and ARGS as arguments." name wrapper))))
+The Capf calls `%s' with CAPF and ARGS as arguments.
+See `%s' for documentation." name wrapper wrapper))))
 
 ;;;###autoload (autoload 'cape-capf-accept-all "cape")
 ;;;###autoload (autoload 'cape-capf-buster "cape")
@@ -1261,6 +1297,7 @@ The Capf calls `%s' with CAPF and ARGS as arguments." name wrapper))))
 ;;;###autoload (autoload 'cape-capf-properties "cape")
 ;;;###autoload (autoload 'cape-capf-silent "cape")
 ;;;###autoload (autoload 'cape-capf-super "cape")
+;;;###autoload (autoload 'cape-capf-trigger "cape")
 
 (defvar-keymap cape-prefix-map
   :doc "Keymap used as completion entry point.

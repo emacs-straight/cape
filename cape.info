@@ -1,4 +1,4 @@
-This is docSEWOAA.info, produced by makeinfo version 6.8 from cape.texi.
+This is docOADTLL.info, produced by makeinfo version 6.8 from cape.texi.
 
 INFO-DIR-SECTION Emacs misc features
 START-INFO-DIR-ENTRY
@@ -6,7 +6,7 @@ START-INFO-DIR-ENTRY
 END-INFO-DIR-ENTRY
 
 
-File: docSEWOAA.info,  Node: Top,  Next: Available Capfs,  Up: (dir)
+File: docOADTLL.info,  Node: Top,  Next: Available Capfs,  Up: (dir)
 
 cape.el - Let your completions fly!
 ***********************************
@@ -52,7 +52,7 @@ CAPF adapters and transformers
 
 
 
-File: docSEWOAA.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top,  Up: Top
+File: docOADTLL.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top,  Up: Top
 
 1 Available Capfs
 *****************
@@ -75,7 +75,7 @@ File: docSEWOAA.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top, 
    • ‘cape-tex’: Complete Unicode char from TeX command, e.g.  ‘\hbar’.
 
 
-File: docSEWOAA.info,  Node: Configuration,  Next: CAPF adapters and transformers,  Prev: Available Capfs,  Up: Top
+File: docOADTLL.info,  Node: Configuration,  Next: CAPF adapters and transformers,  Prev: Available Capfs,  Up: Top
 
 2 Configuration
 ***************
@@ -135,7 +135,7 @@ information.
      )
 
 
-File: docSEWOAA.info,  Node: CAPF adapters and transformers,  Next: Contributions,  Prev: Configuration,  Up: Top
+File: docOADTLL.info,  Node: CAPF adapters and transformers,  Next: Contributions,  Prev: Configuration,  Up: Top
 
 3 CAPF adapters and transformers
 ********************************
@@ -148,7 +148,7 @@ File: docSEWOAA.info,  Node: CAPF adapters and transformers,  Next: Contribution
 * Capf transformers::
 
 
-File: docSEWOAA.info,  Node: Company adapter,  Next: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
+File: docOADTLL.info,  Node: Company adapter,  Next: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
 
 3.1 Company adapter
 ===================
@@ -214,7 +214,7 @@ Company backend, which can then be used as a Capf via
                               '(company-dabbrev company-elisp)))))
 
 
-File: docSEWOAA.info,  Node: Super-Capf - Merging multiple Capfs,  Next: Capf-Buster - Cache busting,  Prev: Company adapter,  Up: CAPF adapters and transformers
+File: docOADTLL.info,  Node: Super-Capf - Merging multiple Capfs,  Next: Capf-Buster - Cache busting,  Prev: Company adapter,  Up: CAPF adapters and transformers
 
 3.2 Super-Capf - Merging multiple Capfs
 =======================================
@@ -222,13 +222,13 @@ File: docSEWOAA.info,  Node: Super-Capf - Merging multiple Capfs,  Next: Capf-Bu
 _Throw multiple Capfs under the Cape and get a Super-Capf!_
 
    Cape supports merging multiple Capfs using the function
-‘cape-capf-super’.  Due to some technical details, not all Capfs can be
-merged successfully.  Merge Capfs one by one and make sure that you get
-the desired outcome.
+‘cape-capf-super’.  Due to technical details, not all Capfs can be
+merged successfully.  Try to merge Capfs one by one and make sure that
+you get the desired outcome.
 
-   Note that ‘cape-capf-super’ is not needed if multiple Capfs should
-betried one after the other, for example you can use ‘cape-file’
-together with programming mode Capfs by adding ‘cape-file’ to the
+   Note that ‘cape-capf-super’ is not needed if multiple Capfs should be
+tried one after another, for example you can use ‘cape-file’ together
+with programming mode Capfs by adding ‘cape-file’ to the
 ‘completion-at-point-functions’ list.  File completion will then be
 available in comments and string literals, but not in normal code.
 ‘cape-capf-super’ is only necessary if you want to combine multiple
@@ -243,20 +243,33 @@ rule of thumb, ‘cape-capf-super’ works for static completion functions
 like ‘cape-dabbrev’, ‘cape-keyword’, ‘cape-dict’, etc., but not for
 multi-step completions like ‘cape-file’.
 
+   The results returned by the individual Capfs are listed after each
+other, where the the order of the completion candidates is preserved.
+In order to override this sorting behavior use ‘cape-capf-sort’, such
+that the completion UI can apply its own sorting.
+
      ;; Merge the dabbrev, dict and keyword capfs, display candidates together.
      (setq-local completion-at-point-functions
-                 (list (cape-capf-super #'cape-dabbrev #'cape-dict #'cape-keyword)))
+                 (list (cape-capf-super #'cape-dabbrev #'cape-dict)))
 
-     ;; Alternative: Define named Capf instead of using the anonymous Capf directly
-     (defun cape-dabbrev-dict-keyword ()
-       (cape-wrap-super #'cape-dabbrev #'cape-dict #'cape-keyword))
-     (setq-local completion-at-point-functions (list #'cape-dabbrev-dict-keyword))
+     ;; Let the UI (e.g. Corfu) sort the candidates by overriding the sort function.
+     (setq-local completion-at-point-functions
+                 (list (cape-capf-sort (cape-capf-super #'cape-dabbrev #'cape-dict))))
+
+     ;; Trigger completion only after trigger character.
+     (setq-local completion-at-point-functions
+                 (list (cape-capf-trigger (cape-capf-super #'cape-abbrev #'tempel-complete) ?/)))
+
+     ;; Define named Capf instead of using the anonymous Capf directly.
+     (defun cape-dabbrev-dict ()
+       (cape-wrap-super #'cape-dabbrev #'cape-dict))
+     (setq-local completion-at-point-functions (list #'cape-dabbrev-dict))
 
    See also the aforementioned ‘company--multi-backend-adapter’ from
 Company, which allows you to merge multiple Company backends.
 
 
-File: docSEWOAA.info,  Node: Capf-Buster - Cache busting,  Next: Capf transformers,  Prev: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
+File: docOADTLL.info,  Node: Capf-Buster - Cache busting,  Next: Capf transformers,  Prev: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
 
 3.3 Capf-Buster - Cache busting
 ===============================
@@ -276,7 +289,7 @@ similarly refreshing strategy.
                  (list (cape-capf-buster #'some-caching-capf)))
 
 
-File: docSEWOAA.info,  Node: Capf transformers,  Prev: Capf-Buster - Cache busting,  Up: CAPF adapters and transformers
+File: docOADTLL.info,  Node: Capf transformers,  Prev: Capf-Buster - Cache busting,  Up: CAPF adapters and transformers
 
 3.4 Capf transformers
 =====================
@@ -321,6 +334,8 @@ function symbol.
    • ‘cape-capf-sort’, ‘cape-wrap-sort’: Add sort function to a Capf.
    • ‘cape-capf-super’, ‘cape-wrap-super’: Merge multiple Capfs into a
      Super-Capf.
+   • ‘cape-capf-trigger’, ‘cape-wrap-trigger’: Create a Capf with a
+     trigger prefix character.
 
    In the following we show a few example configurations, which have
 come up on the Cape (https://github.com/minad/cape/issues) or Corfu
@@ -328,18 +343,22 @@ issue tracker (https://github.com/minad/corfu/issues) or the Corfu wiki.
 (https://github.com/minad/corfu/wiki) I use some of these tweaks in my
 personal configuration.
 
-     ;; Example 1: Configure a Capf with a specific auto completion prefix length
+     ;; Example 1: Configure a merged Capf with a trigger prefix character.
+     (setq-local completion-at-point-functions
+                 (list (cape-capf-trigger (cape-capf-super #'cape-abbrev #'tempel-complete) ?/)))
+
+     ;; Example 2: Configure a Capf with a specific auto completion prefix length.
      (setq-local completion-at-point-functions
                  (list (cape-capf-prefix-length #'cape-dabbrev 2)))
 
-     ;; Example 2: Create a Capf with debugging messages
+     ;; Example 3: Create a Capf with debugging messages.
      (setq-local completion-at-point-functions (list (cape-capf-debug #'cape-dict)))
 
-     ;; Example 3: Named Capf
+     ;; Example 4: Named Capf.
      (defalias 'cape-dabbrev-min-2 (cape-capf-prefix-length #'cape-dabbrev 2))
      (setq-local completion-at-point-functions (list #'cape-dabbrev-min-2))
 
-     ;; Example 4: Define a defensive Dabbrev Capf, which accepts all inputs.  If you
+     ;; Example 5: Define a defensive Dabbrev Capf, which accepts all inputs.  If you
      ;; use Corfu and `corfu-auto=t', the first candidate won't be auto selected if
      ;; `corfu-preselect=valid', such that it cannot be accidentally committed when
      ;; pressing RET.
@@ -347,24 +366,24 @@ personal configuration.
        (cape-wrap-accept-all #'cape-dabbrev))
      (add-hook 'completion-at-point-functions #'my-cape-dabbrev-accept-all)
 
-     ;; Example 5: Define interactive Capf which can be bound to a key.  Here we wrap
+     ;; Example 6: Define interactive Capf which can be bound to a key.  Here we wrap
      ;; the `elisp-completion-at-point' such that we can complete Elisp code
      ;; explicitly in arbitrary buffers.
      (keymap-global-set "C-c p e" (cape-capf-interactive #'elisp-completion-at-point))
 
-     ;; Example 6: Ignore :keywords in Elisp completion.
+     ;; Example 7: Ignore :keywords in Elisp completion.
      (defun ignore-elisp-keywords (sym)
        (not (keywordp sym)))
      (setq-local completion-at-point-functions
                  (list (cape-capf-predicate #'elisp-completion-at-point
                                             #'ignore-elisp-keywords)))
 
-     ;; Example 7: Catch errors with `cape-wrap-silent'.
+     ;; Example 8: Catch errors with `cape-wrap-silent'.
      (advice-add 'dabbrev-capf :around #'cape-wrap-silent)
      (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent) ;; Was necessary on Emacs 28
 
 
-File: docSEWOAA.info,  Node: Contributions,  Prev: CAPF adapters and transformers,  Up: Top
+File: docOADTLL.info,  Node: Contributions,  Prev: CAPF adapters and transformers,  Up: Top
 
 4 Contributions
 ***************
@@ -382,9 +401,9 @@ Node: Configuration3013
 Node: CAPF adapters and transformers5821
 Node: Company adapter6129
 Node: Super-Capf - Merging multiple Capfs8824
-Node: Capf-Buster - Cache busting11005
-Node: Capf transformers11944
-Node: Contributions16481
+Node: Capf-Buster - Cache busting11636
+Node: Capf transformers12575
+Node: Contributions17446
 
 End Tag Table
 
