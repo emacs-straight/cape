@@ -289,10 +289,10 @@ NAME is the name of the Capf, BEG and END are the input markers."
          (+ beg 0) (+ end 0) (buffer-substring-no-properties beg end)
          str completion-ignore-case
          (if completion-regexp-list
-             (format " regexp=%s" (cape--debug-print completion-regexp-list t))
+             (concat " regexp=" (cape--debug-print completion-regexp-list t))
            "")
          (if pred
-             (format " predicate=%s" (cape--debug-print pred))
+             (concat " predicate=" (cape--debug-print pred))
            "")
          (cape--debug-print result)))
       result)))
@@ -1043,10 +1043,10 @@ meaningful debugging output."
           table name (copy-marker beg) (copy-marker end t))
         ,@(when-let ((exit (plist-get plist :exit-function)))
             (list :exit-function
-                  (lambda (cand status)
-                    (cape--debug-message "%s:exit(candidate=%S status=%s)"
-                                         name cand status)
-                    (funcall exit cand status))))
+                  (lambda (str status)
+                    (cape--debug-message "%s:exit(status=%s string=%S)"
+                                         name status str)
+                    (funcall exit str status))))
         . ,plist))
     (result
      (cape--debug-message "%s() => %s (No completion)"
@@ -1223,9 +1223,11 @@ This function can be used as an advice around an existing Capf."
 ;;;###autoload
 (defun cape-wrap-trigger (capf trigger)
   "Ensure that TRIGGER character occurs before point and then call CAPF.
+See also `corfu-auto-trigger'.
 Example:
-  (setq completion-at-point-functions
-      (list (cape-capf-trigger \\='cape-abbrev ?/)))"
+  (setq corfu-auto-trigger \"/\"
+        completion-at-point-functions
+        (list (cape-capf-trigger \\='cape-abbrev ?/)))"
   (when-let ((pos (save-excursion (search-backward (char-to-string trigger) (pos-bol) 'noerror)))
              ((save-excursion (not (re-search-backward "\\s-" pos 'noerror)))))
     (pcase
@@ -1250,18 +1252,9 @@ Example:
 ;;;###autoload (autoload 'cape-capf-purify "cape")
 ;;;###autoload
 (defun cape-wrap-purify (capf)
-  "Call CAPF and ensure that it does not illegally modify the buffer.
+  "Obsolete purification wrapper calling CAPF.
 This function can be used as an advice around an existing Capf."
-  (catch 'cape--illegal-completion-in-region
-    (condition-case nil
-        (let ((buffer-read-only t)
-              (inhibit-read-only nil)
-              (completion-in-region-function
-               (lambda (beg end coll pred)
-                 (throw 'cape--illegal-completion-in-region
-                        (list beg end coll :predicate pred)))))
-          (funcall capf))
-      (buffer-read-only nil))))
+  (funcall capf))
 (make-obsolete 'cape-wrap-purify nil "2.2")
 (make-obsolete 'cape-capf-purify nil "2.2")
 

@@ -1,4 +1,4 @@
-This is docOADTLL.info, produced by makeinfo version 6.8 from cape.texi.
+This is doc8dhT6X.info, produced by makeinfo version 6.8 from cape.texi.
 
 INFO-DIR-SECTION Emacs misc features
 START-INFO-DIR-ENTRY
@@ -6,7 +6,7 @@ START-INFO-DIR-ENTRY
 END-INFO-DIR-ENTRY
 
 
-File: docOADTLL.info,  Node: Top,  Next: Available Capfs,  Up: (dir)
+File: doc8dhT6X.info,  Node: Top,  Next: Available Capfs,  Up: (dir)
 
 cape.el - Let your completions fly!
 ***********************************
@@ -52,7 +52,7 @@ CAPF adapters and transformers
 
 
 
-File: docOADTLL.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top,  Up: Top
+File: doc8dhT6X.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top,  Up: Top
 
 1 Available Capfs
 *****************
@@ -75,7 +75,7 @@ File: docOADTLL.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top, 
    • ‘cape-tex’: Complete Unicode char from TeX command, e.g.  ‘\hbar’.
 
 
-File: docOADTLL.info,  Node: Configuration,  Next: CAPF adapters and transformers,  Prev: Available Capfs,  Up: Top
+File: doc8dhT6X.info,  Node: Configuration,  Next: CAPF adapters and transformers,  Prev: Available Capfs,  Up: Top
 
 2 Configuration
 ***************
@@ -135,7 +135,7 @@ information.
      )
 
 
-File: docOADTLL.info,  Node: CAPF adapters and transformers,  Next: Contributions,  Prev: Configuration,  Up: Top
+File: doc8dhT6X.info,  Node: CAPF adapters and transformers,  Next: Contributions,  Prev: Configuration,  Up: Top
 
 3 CAPF adapters and transformers
 ********************************
@@ -148,7 +148,7 @@ File: docOADTLL.info,  Node: CAPF adapters and transformers,  Next: Contribution
 * Capf transformers::
 
 
-File: docOADTLL.info,  Node: Company adapter,  Next: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
+File: doc8dhT6X.info,  Node: Company adapter,  Next: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
 
 3.1 Company adapter
 ===================
@@ -214,7 +214,7 @@ Company backend, which can then be used as a Capf via
                               '(company-dabbrev company-elisp)))))
 
 
-File: docOADTLL.info,  Node: Super-Capf - Merging multiple Capfs,  Next: Capf-Buster - Cache busting,  Prev: Company adapter,  Up: CAPF adapters and transformers
+File: doc8dhT6X.info,  Node: Super-Capf - Merging multiple Capfs,  Next: Capf-Buster - Cache busting,  Prev: Company adapter,  Up: CAPF adapters and transformers
 
 3.2 Super-Capf - Merging multiple Capfs
 =======================================
@@ -257,7 +257,8 @@ that the completion UI can apply its own sorting.
                  (list (cape-capf-sort (cape-capf-super #'cape-dabbrev #'cape-dict))))
 
      ;; Trigger completion only after trigger character.
-     (setq-local completion-at-point-functions
+     (setq-local corfu-auto-trigger "/"
+                 completion-at-point-functions
                  (list (cape-capf-trigger (cape-capf-super #'cape-abbrev #'tempel-complete) ?/)))
 
      ;; Define named Capf instead of using the anonymous Capf directly.
@@ -269,7 +270,7 @@ that the completion UI can apply its own sorting.
 Company, which allows you to merge multiple Company backends.
 
 
-File: docOADTLL.info,  Node: Capf-Buster - Cache busting,  Next: Capf transformers,  Prev: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
+File: doc8dhT6X.info,  Node: Capf-Buster - Cache busting,  Next: Capf transformers,  Prev: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
 
 3.3 Capf-Buster - Cache busting
 ===============================
@@ -289,7 +290,7 @@ similarly refreshing strategy.
                  (list (cape-capf-buster #'some-caching-capf)))
 
 
-File: docOADTLL.info,  Node: Capf transformers,  Prev: Capf-Buster - Cache busting,  Up: CAPF adapters and transformers
+File: doc8dhT6X.info,  Node: Capf transformers,  Prev: Capf-Buster - Cache busting,  Up: CAPF adapters and transformers
 
 3.4 Capf transformers
 =====================
@@ -344,7 +345,8 @@ issue tracker (https://github.com/minad/corfu/issues) or the Corfu wiki.
 personal configuration.
 
      ;; Example 1: Configure a merged Capf with a trigger prefix character.
-     (setq-local completion-at-point-functions
+     (setq-local corfu-auto-trigger "/"
+                 completion-at-point-functions
                  (list (cape-capf-trigger (cape-capf-super #'cape-abbrev #'tempel-complete) ?/)))
 
      ;; Example 2: Configure a Capf with a specific auto completion prefix length.
@@ -383,7 +385,7 @@ personal configuration.
      (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent) ;; Was necessary on Emacs 28
 
 
-File: docOADTLL.info,  Node: Contributions,  Prev: CAPF adapters and transformers,  Up: Top
+File: doc8dhT6X.info,  Node: Contributions,  Prev: CAPF adapters and transformers,  Up: Top
 
 4 Contributions
 ***************
@@ -401,9 +403,9 @@ Node: Configuration3013
 Node: CAPF adapters and transformers5821
 Node: Company adapter6129
 Node: Super-Capf - Merging multiple Capfs8824
-Node: Capf-Buster - Cache busting11636
-Node: Capf transformers12575
-Node: Contributions17446
+Node: Capf-Buster - Cache busting11676
+Node: Capf transformers12615
+Node: Contributions17526
 
 End Tag Table
 
