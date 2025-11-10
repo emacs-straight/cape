@@ -902,7 +902,10 @@ the `completion-at-point-functions':
         (list (cape-capf-super \\='elisp-completion-at-point
                                :with \\='tempel-complete)
               (cape-capf-super \\='cape-dabbrev
-                               :with \\='tempel-complete)))"
+                               :with \\='tempel-complete)))
+
+See the dual `cape-wrap-choose' if you want to try multiple Capfs in
+turn."
   (when-let ((results (cl-loop for capf in capfs until (eq capf :with)
                                for res = (funcall capf)
                                if res collect (cons t res))))
@@ -1008,6 +1011,27 @@ the `completion-at-point-functions':
             cape--super-functions)))))
 
 ;;;###autoload
+(defun cape-wrap-choose (&rest capfs)
+  "Call each of CAPFS in turn and return first non-nil result.
+Use `cape-wrap-choose' to create a single Capf from multiple Capfs.
+Usually you want to add multiple non-exclusive Capfs to the variable
+`completion-at-point-functions' directly instead.  See the dual
+`cape-wrap-super' if you want to merge multiple Capf results."
+  (cl-loop
+   for capf in capfs thereis
+   (pcase (funcall capf)
+     ((and result `(,beg ,end ,table . ,plist))
+      (let* ((str (buffer-substring-no-properties beg end))
+             (pt (- (point) beg))
+             (pred (plist-get plist :predicate))
+             (md (completion-metadata (substring str 0 pt) table pred)))
+        ;; NOTE: Treat the Capfs always as non-exclusive. Return the first which
+        ;; returns a non-nil result. See the comment in `corfu--capf-wrapper'
+        ;; for further considerations.
+        (and (completion-try-completion str table pred pt md)
+             result))))))
+
+;;;###autoload
 (defun cape-wrap-debug (capf &optional name)
   "Call CAPF and return a completion table which prints trace messages.
 If CAPF is an anonymous lambda, pass the Capf NAME explicitly for
@@ -1100,12 +1124,11 @@ This function can be used as an advice around an existing Capf."
   "Call CAPF and strip or add completion PROPERTIES.
 Completion properties include for example :exclusive, :category,
 :annotation-function, :display-sort-function and various :company-*
-extensions.  The :strip flag means to strip all completion properties."
+extensions.  Strip all properties if PROPERTIES is :strip."
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
      `( ,beg ,end ,table
-        ,@(and (not (plist-get properties :strip))
-               (append properties plist))))))
+        ,@(and (not (eq :strip (car properties))) (append properties plist))))))
 
 ;;;###autoload
 (defun cape-wrap-nonexclusive (capf)
@@ -1254,19 +1277,21 @@ Example:
 (defun cape-wrap-purify (capf)
   "Obsolete purification wrapper calling CAPF.
 This function can be used as an advice around an existing Capf."
+  (warn "`cape-wrap-purify' is obsolete")
   (funcall capf))
 (make-obsolete 'cape-wrap-purify nil "2.2")
 (make-obsolete 'cape-capf-purify nil "2.2")
 
 (dolist (wrapper (list #'cape-wrap-accept-all #'cape-wrap-buster
-                       #'cape-wrap-case-fold #'cape-wrap-debug
-                       #'cape-wrap-inside-code #'cape-wrap-inside-comment
-                       #'cape-wrap-inside-faces #'cape-wrap-inside-string
-                       #'cape-wrap-nonexclusive #'cape-wrap-noninterruptible
-                       #'cape-wrap-passthrough #'cape-wrap-predicate
-                       #'cape-wrap-prefix-length #'cape-wrap-properties
-                       'cape-wrap-purify #'cape-wrap-silent
-                       #'cape-wrap-sort #'cape-wrap-super #'cape-wrap-trigger))
+                       #'cape-wrap-case-fold #'cape-wrap-choose
+                       #'cape-wrap-debug #'cape-wrap-inside-code
+                       #'cape-wrap-inside-comment #'cape-wrap-inside-faces
+                       #'cape-wrap-inside-string #'cape-wrap-nonexclusive
+                       #'cape-wrap-noninterruptible #'cape-wrap-passthrough
+                       #'cape-wrap-predicate #'cape-wrap-prefix-length
+                       #'cape-wrap-properties 'cape-wrap-purify
+                       #'cape-wrap-silent #'cape-wrap-sort
+                       #'cape-wrap-super #'cape-wrap-trigger))
   (let ((name (string-remove-prefix "cape-wrap-" (symbol-name wrapper))))
     (defalias (intern (format "cape-capf-%s" name))
       (lambda (capf &rest args) (lambda () (apply wrapper capf args)))
@@ -1277,6 +1302,7 @@ See `%s' for documentation." name wrapper wrapper))))
 ;;;###autoload (autoload 'cape-capf-accept-all "cape")
 ;;;###autoload (autoload 'cape-capf-buster "cape")
 ;;;###autoload (autoload 'cape-capf-case-fold "cape")
+;;;###autoload (autoload 'cape-capf-choose "cape")
 ;;;###autoload (autoload 'cape-capf-debug "cape")
 ;;;###autoload (autoload 'cape-capf-inside-code "cape")
 ;;;###autoload (autoload 'cape-capf-inside-comment "cape")

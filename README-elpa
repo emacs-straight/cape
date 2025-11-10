@@ -163,14 +163,16 @@ Table of Contents
   │ 
   │ (defun demo-backend (action &optional arg &rest _)
   │   (pcase action
-  │     ('prefix (and (memq (char-before) '(?: ?\;))
-  │ 		  (cons (string (char-before)) t)))
+  │     ('prefix
+  │      (when-let (beg (save-excursion
+  │ 		      (and (re-search-backward "[;:]" (pos-bol) t) (point))))
+  │        (list (buffer-substring-no-properties beg (point)) "" t)))
   │     ('candidates (all-completions arg demo-alist))
   │     ('annotation (concat " " (cdr (assoc arg demo-alist))))
   │     ('post-completion
   │      (let ((str (buffer-substring (- (point) 3) (point))))
   │        (delete-region (- (point) 3) (point))
-  │      (insert (cdr (assoc str demo-alist)))))))
+  │        (insert (cdr (assoc str demo-alist)))))))
   │ 
   │ ;; Register demo backend with `completion-at-point'
   │ (setq completion-at-point-functions
@@ -251,8 +253,10 @@ Table of Contents
   │ (setq-local completion-at-point-functions (list #'cape-dabbrev-dict))
   └────
 
-  See also the aforementioned `company--multi-backend-adapter' from
-  Company, which allows you to merge multiple Company backends.
+  If you want to merge multiple Company backends, use the aforementioned
+  `company--multi-backend-adapter' from Company. In order to combine
+  multiple Capfs, such that each of the Capfs is tried one after
+  another, use `cape-capf-choose'.
 
 
 3.3 Capf-Buster - Cache busting
@@ -279,6 +283,9 @@ Table of Contents
 3.4 Capf transformers
 ─────────────────────
 
+  /Wrap one or multiple Capfs in a Cape to get a Capf of different
+  flavor!/
+
   Cape provides a set of additional Capf transformation functions, which
   are mostly meant to used by experts to fine tune the Capf behavior and
   Capf interaction. These can either be used as advices (`cape-wrap-*)'
@@ -290,6 +297,7 @@ Table of Contents
     accepts every input as valid.
   • `cape-capf-case-fold', `cape-wrap-case-fold': Create a Capf which is
     case insensitive.
+  • `cape-capf-choose', `cape-wrap-choose': Choose from multiple Capfs.
   • `cape-capf-debug', `cape-wrap-debug': Create a Capf which prints
     debugging messages.
   • `cape-capf-inside-code', `cape-wrap-inside-code': Ensure that Capf

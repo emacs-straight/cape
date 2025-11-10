@@ -1,4 +1,4 @@
-This is doc8dhT6X.info, produced by makeinfo version 6.8 from cape.texi.
+This is docqqeGIJ.info, produced by makeinfo version 6.8 from cape.texi.
 
 INFO-DIR-SECTION Emacs misc features
 START-INFO-DIR-ENTRY
@@ -6,7 +6,7 @@ START-INFO-DIR-ENTRY
 END-INFO-DIR-ENTRY
 
 
-File: doc8dhT6X.info,  Node: Top,  Next: Available Capfs,  Up: (dir)
+File: docqqeGIJ.info,  Node: Top,  Next: Available Capfs,  Up: (dir)
 
 cape.el - Let your completions fly!
 ***********************************
@@ -52,7 +52,7 @@ CAPF adapters and transformers
 
 
 
-File: doc8dhT6X.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top,  Up: Top
+File: docqqeGIJ.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top,  Up: Top
 
 1 Available Capfs
 *****************
@@ -75,7 +75,7 @@ File: doc8dhT6X.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top, 
    • ‘cape-tex’: Complete Unicode char from TeX command, e.g.  ‘\hbar’.
 
 
-File: doc8dhT6X.info,  Node: Configuration,  Next: CAPF adapters and transformers,  Prev: Available Capfs,  Up: Top
+File: docqqeGIJ.info,  Node: Configuration,  Next: CAPF adapters and transformers,  Prev: Available Capfs,  Up: Top
 
 2 Configuration
 ***************
@@ -135,7 +135,7 @@ information.
      )
 
 
-File: doc8dhT6X.info,  Node: CAPF adapters and transformers,  Next: Contributions,  Prev: Configuration,  Up: Top
+File: docqqeGIJ.info,  Node: CAPF adapters and transformers,  Next: Contributions,  Prev: Configuration,  Up: Top
 
 3 CAPF adapters and transformers
 ********************************
@@ -148,7 +148,7 @@ File: doc8dhT6X.info,  Node: CAPF adapters and transformers,  Next: Contribution
 * Capf transformers::
 
 
-File: doc8dhT6X.info,  Node: Company adapter,  Next: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
+File: docqqeGIJ.info,  Node: Company adapter,  Next: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
 
 3.1 Company adapter
 ===================
@@ -182,14 +182,16 @@ Company.
 
      (defun demo-backend (action &optional arg &rest _)
        (pcase action
-         ('prefix (and (memq (char-before) '(?: ?\;))
-                       (cons (string (char-before)) t)))
+         ('prefix
+          (when-let (beg (save-excursion
+                           (and (re-search-backward "[;:]" (pos-bol) t) (point))))
+            (list (buffer-substring-no-properties beg (point)) "" t)))
          ('candidates (all-completions arg demo-alist))
          ('annotation (concat " " (cdr (assoc arg demo-alist))))
          ('post-completion
           (let ((str (buffer-substring (- (point) 3) (point))))
             (delete-region (- (point) 3) (point))
-          (insert (cdr (assoc str demo-alist)))))))
+            (insert (cdr (assoc str demo-alist)))))))
 
      ;; Register demo backend with `completion-at-point'
      (setq completion-at-point-functions
@@ -214,7 +216,7 @@ Company backend, which can then be used as a Capf via
                               '(company-dabbrev company-elisp)))))
 
 
-File: doc8dhT6X.info,  Node: Super-Capf - Merging multiple Capfs,  Next: Capf-Buster - Cache busting,  Prev: Company adapter,  Up: CAPF adapters and transformers
+File: docqqeGIJ.info,  Node: Super-Capf - Merging multiple Capfs,  Next: Capf-Buster - Cache busting,  Prev: Company adapter,  Up: CAPF adapters and transformers
 
 3.2 Super-Capf - Merging multiple Capfs
 =======================================
@@ -266,11 +268,13 @@ that the completion UI can apply its own sorting.
        (cape-wrap-super #'cape-dabbrev #'cape-dict))
      (setq-local completion-at-point-functions (list #'cape-dabbrev-dict))
 
-   See also the aforementioned ‘company--multi-backend-adapter’ from
-Company, which allows you to merge multiple Company backends.
+   If you want to merge multiple Company backends, use the
+aforementioned ‘company--multi-backend-adapter’ from Company.  In order
+to combine multiple Capfs, such that each of the Capfs is tried one
+after another, use ‘cape-capf-choose’.
 
 
-File: doc8dhT6X.info,  Node: Capf-Buster - Cache busting,  Next: Capf transformers,  Prev: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
+File: docqqeGIJ.info,  Node: Capf-Buster - Cache busting,  Next: Capf transformers,  Prev: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
 
 3.3 Capf-Buster - Cache busting
 ===============================
@@ -290,22 +294,26 @@ similarly refreshing strategy.
                  (list (cape-capf-buster #'some-caching-capf)))
 
 
-File: doc8dhT6X.info,  Node: Capf transformers,  Prev: Capf-Buster - Cache busting,  Up: CAPF adapters and transformers
+File: docqqeGIJ.info,  Node: Capf transformers,  Prev: Capf-Buster - Cache busting,  Up: CAPF adapters and transformers
 
 3.4 Capf transformers
 =====================
 
-Cape provides a set of additional Capf transformation functions, which
-are mostly meant to used by experts to fine tune the Capf behavior and
-Capf interaction.  These can either be used as advices (‘cape-wrap-*)’
-or to create a new Capf from an existing Capf (‘cape-capf-*’).  You can
-bind the Capfs created by the Capf transformers with ‘defalias’ to a
-function symbol.
+_Wrap one or multiple Capfs in a Cape to get a Capf of different
+flavor!_
+
+   Cape provides a set of additional Capf transformation functions,
+which are mostly meant to used by experts to fine tune the Capf behavior
+and Capf interaction.  These can either be used as advices
+(‘cape-wrap-*)’ or to create a new Capf from an existing Capf
+(‘cape-capf-*’).  You can bind the Capfs created by the Capf
+transformers with ‘defalias’ to a function symbol.
 
    • ‘cape-capf-accept-all’, ‘cape-wrap-accept-all’: Create a Capf which
      accepts every input as valid.
    • ‘cape-capf-case-fold’, ‘cape-wrap-case-fold’: Create a Capf which
      is case insensitive.
+   • ‘cape-capf-choose’, ‘cape-wrap-choose’: Choose from multiple Capfs.
    • ‘cape-capf-debug’, ‘cape-wrap-debug’: Create a Capf which prints
      debugging messages.
    • ‘cape-capf-inside-code’, ‘cape-wrap-inside-code’: Ensure that Capf
@@ -385,7 +393,7 @@ personal configuration.
      (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent) ;; Was necessary on Emacs 28
 
 
-File: doc8dhT6X.info,  Node: Contributions,  Prev: CAPF adapters and transformers,  Up: Top
+File: docqqeGIJ.info,  Node: Contributions,  Prev: CAPF adapters and transformers,  Up: Top
 
 4 Contributions
 ***************
@@ -402,10 +410,10 @@ Node: Available Capfs1948
 Node: Configuration3013
 Node: CAPF adapters and transformers5821
 Node: Company adapter6129
-Node: Super-Capf - Merging multiple Capfs8824
-Node: Capf-Buster - Cache busting11676
-Node: Capf transformers12615
-Node: Contributions17526
+Node: Super-Capf - Merging multiple Capfs8928
+Node: Capf-Buster - Cache busting11891
+Node: Capf transformers12830
+Node: Contributions17902
 
 End Tag Table
 
