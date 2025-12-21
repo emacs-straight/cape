@@ -28,9 +28,9 @@
 ;;; Commentary:
 
 ;; Let your completions fly! This package provides additional completion
-;; backends in the form of Capfs (completion-at-point-functions).
+;; backends in the form of Capfs, see `completion-at-point-functions'.
 ;;
-;; `cape-abbrev': Complete abbreviation (add-global-abbrev, add-mode-abbrev).
+;; `cape-abbrev': Complete abbreviation (`add-global-abbrev', `add-mode-abbrev').
 ;; `cape-dabbrev': Complete word from current buffers.
 ;; `cape-dict': Complete word from dictionary file.
 ;; `cape-elisp-block': Complete Elisp in Org or Markdown code block.
@@ -429,15 +429,21 @@ If INTERACTIVE is nil the function acts like a Capf."
                                      (substitute-in-file-name file)))))
         (unless (boundp 'comint-unquote-function)
           (require 'comint))
-        `( ,beg ,end
-           ,(cape--nonessential-table
-             (completion-table-with-quoting
-              #'read-file-name-internal
-              comint-unquote-function
-              comint-requote-function))
-           ,@(when (or prefix (string-match-p "./" file))
-               '(:company-prefix-length t))
-           ,@cape--file-properties)))))
+        (let ((table (cape--nonessential-table
+                      (completion-table-with-quoting
+                       #'read-file-name-internal
+                       comint-unquote-function
+                       comint-requote-function))))
+          `( ,beg ,end ,table
+             :company-location
+             ,(lambda (file)
+                (let* ((str (buffer-substring-no-properties beg (point)))
+                       (pre (car (completion-boundaries str table nil "")))
+                       (file (file-name-concat (substring str 0 pre) file)))
+                  (and (file-exists-p file) (list file))))
+             ,@(when (or prefix (string-match-p "./" file))
+                 '(:company-prefix-length t))
+             ,@cape--file-properties))))))
 
 ;;;;; cape-elisp-symbol
 
@@ -1025,9 +1031,8 @@ Usually you want to add multiple non-exclusive Capfs to the variable
              (pt (- (point) beg))
              (pred (plist-get plist :predicate))
              (md (completion-metadata (substring str 0 pt) table pred)))
-        ;; NOTE: Treat the Capfs always as non-exclusive. Return the first which
-        ;; returns a non-nil result. See the comment in `corfu--capf-wrapper'
-        ;; for further considerations.
+        ;; Treat the Capfs always as non-exclusive. Return the first which
+        ;; returns non-nil. See also the comment in `corfu--capf-wrapper'.
         (and (completion-try-completion str table pred pt md)
              result))))))
 
