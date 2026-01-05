@@ -1,4 +1,4 @@
-This is docifSyIt.info, produced by makeinfo version 7.1.1 from
+This is doc8tdlgo.info, produced by makeinfo version 7.1.1 from
 cape.texi.
 
 INFO-DIR-SECTION Emacs misc features
@@ -7,7 +7,7 @@ START-INFO-DIR-ENTRY
 END-INFO-DIR-ENTRY
 
 
-File: docifSyIt.info,  Node: Top,  Next: Available Capfs,  Up: (dir)
+File: doc8tdlgo.info,  Node: Top,  Next: Available Capfs,  Up: (dir)
 
 cape.el - Let your completions fly!
 ***********************************
@@ -53,7 +53,7 @@ CAPF adapters and transformers
 
 
 
-File: docifSyIt.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top,  Up: Top
+File: doc8tdlgo.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top,  Up: Top
 
 1 Available Capfs
 *****************
@@ -76,7 +76,7 @@ File: docifSyIt.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top, 
    • ‘cape-tex’: Complete Unicode char from TeX command, e.g.  ‘\hbar’.
 
 
-File: docifSyIt.info,  Node: Configuration,  Next: CAPF adapters and transformers,  Prev: Available Capfs,  Up: Top
+File: doc8tdlgo.info,  Node: Configuration,  Next: CAPF adapters and transformers,  Prev: Available Capfs,  Up: Top
 
 2 Configuration
 ***************
@@ -136,7 +136,7 @@ information.
      )
 
 
-File: docifSyIt.info,  Node: CAPF adapters and transformers,  Next: Contributions,  Prev: Configuration,  Up: Top
+File: doc8tdlgo.info,  Node: CAPF adapters and transformers,  Next: Contributions,  Prev: Configuration,  Up: Top
 
 3 CAPF adapters and transformers
 ********************************
@@ -149,7 +149,7 @@ File: docifSyIt.info,  Node: CAPF adapters and transformers,  Next: Contribution
 * Capf transformers::
 
 
-File: docifSyIt.info,  Node: Company adapter,  Next: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
+File: doc8tdlgo.info,  Node: Company adapter,  Next: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
 
 3.1 Company adapter
 ===================
@@ -184,8 +184,8 @@ Company.
      (defun demo-backend (action &optional arg &rest _)
        (pcase action
          ('prefix
-          (when-let (beg (save-excursion
-                           (and (re-search-backward "[;:]" (pos-bol) t) (point))))
+          (when-let* ((beg (save-excursion
+                             (and (re-search-backward "[;:]" (pos-bol) t) (point)))))
             (list (buffer-substring-no-properties beg (point)) "" t)))
          ('candidates (all-completions arg demo-alist))
          ('annotation (concat " " (cdr (assoc arg demo-alist))))
@@ -217,7 +217,7 @@ Company backend, which can then be used as a Capf via
                               '(company-dabbrev company-elisp)))))
 
 
-File: docifSyIt.info,  Node: Super-Capf - Merging multiple Capfs,  Next: Capf-Buster - Cache busting,  Prev: Company adapter,  Up: CAPF adapters and transformers
+File: doc8tdlgo.info,  Node: Super-Capf - Merging multiple Capfs,  Next: Capf-Buster - Cache busting,  Prev: Company adapter,  Up: CAPF adapters and transformers
 
 3.2 Super-Capf - Merging multiple Capfs
 =======================================
@@ -275,7 +275,7 @@ to combine multiple Capfs, such that each of the Capfs is tried one
 after another, use ‘cape-capf-choose’.
 
 
-File: docifSyIt.info,  Node: Capf-Buster - Cache busting,  Next: Capf transformers,  Prev: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
+File: doc8tdlgo.info,  Node: Capf-Buster - Cache busting,  Next: Capf transformers,  Prev: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
 
 3.3 Capf-Buster - Cache busting
 ===============================
@@ -295,7 +295,7 @@ similarly refreshing strategy.
                  (list (cape-capf-buster #'some-caching-capf)))
 
 
-File: docifSyIt.info,  Node: Capf transformers,  Prev: Capf-Buster - Cache busting,  Up: CAPF adapters and transformers
+File: doc8tdlgo.info,  Node: Capf transformers,  Prev: Capf-Buster - Cache busting,  Up: CAPF adapters and transformers
 
 3.4 Capf transformers
 =====================
@@ -394,7 +394,7 @@ personal configuration.
      (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent) ;; Was necessary on Emacs 28
 
 
-File: docifSyIt.info,  Node: Contributions,  Prev: CAPF adapters and transformers,  Up: Top
+File: doc8tdlgo.info,  Node: Contributions,  Prev: CAPF adapters and transformers,  Up: Top
 
 4 Contributions
 ***************
@@ -411,10 +411,10 @@ Node: Available Capfs1948
 Node: Configuration3013
 Node: CAPF adapters and transformers5821
 Node: Company adapter6129
-Node: Super-Capf - Merging multiple Capfs8928
-Node: Capf-Buster - Cache busting11891
-Node: Capf transformers12830
-Node: Contributions17902
+Node: Super-Capf - Merging multiple Capfs8933
+Node: Capf-Buster - Cache busting11896
+Node: Capf transformers12835
+Node: Contributions17907
 
 End Tag Table
 
