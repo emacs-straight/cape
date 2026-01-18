@@ -1,5 +1,4 @@
-This is doc8tdlgo.info, produced by makeinfo version 7.1.1 from
-cape.texi.
+This is cape.info, produced by makeinfo version 7.1.1 from cape.texi.
 
 INFO-DIR-SECTION Emacs misc features
 START-INFO-DIR-ENTRY
@@ -7,7 +6,7 @@ START-INFO-DIR-ENTRY
 END-INFO-DIR-ENTRY
 
 
-File: doc8tdlgo.info,  Node: Top,  Next: Available Capfs,  Up: (dir)
+File: cape.info,  Node: Top,  Next: Available Capfs,  Up: (dir)
 
 cape.el - Let your completions fly!
 ***********************************
@@ -53,7 +52,7 @@ CAPF adapters and transformers
 
 
 
-File: doc8tdlgo.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top,  Up: Top
+File: cape.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top,  Up: Top
 
 1 Available Capfs
 *****************
@@ -76,7 +75,7 @@ File: doc8tdlgo.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top, 
    • ‘cape-tex’: Complete Unicode char from TeX command, e.g.  ‘\hbar’.
 
 
-File: doc8tdlgo.info,  Node: Configuration,  Next: CAPF adapters and transformers,  Prev: Available Capfs,  Up: Top
+File: cape.info,  Node: Configuration,  Next: CAPF adapters and transformers,  Prev: Available Capfs,  Up: Top
 
 2 Configuration
 ***************
@@ -136,7 +135,7 @@ information.
      )
 
 
-File: doc8tdlgo.info,  Node: CAPF adapters and transformers,  Next: Contributions,  Prev: Configuration,  Up: Top
+File: cape.info,  Node: CAPF adapters and transformers,  Next: Contributions,  Prev: Configuration,  Up: Top
 
 3 CAPF adapters and transformers
 ********************************
@@ -149,7 +148,7 @@ File: doc8tdlgo.info,  Node: CAPF adapters and transformers,  Next: Contribution
 * Capf transformers::
 
 
-File: doc8tdlgo.info,  Node: Company adapter,  Next: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
+File: cape.info,  Node: Company adapter,  Next: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
 
 3.1 Company adapter
 ===================
@@ -217,7 +216,7 @@ Company backend, which can then be used as a Capf via
                               '(company-dabbrev company-elisp)))))
 
 
-File: doc8tdlgo.info,  Node: Super-Capf - Merging multiple Capfs,  Next: Capf-Buster - Cache busting,  Prev: Company adapter,  Up: CAPF adapters and transformers
+File: cape.info,  Node: Super-Capf - Merging multiple Capfs,  Next: Capf-Buster - Cache busting,  Prev: Company adapter,  Up: CAPF adapters and transformers
 
 3.2 Super-Capf - Merging multiple Capfs
 =======================================
@@ -275,7 +274,7 @@ to combine multiple Capfs, such that each of the Capfs is tried one
 after another, use ‘cape-capf-choose’.
 
 
-File: doc8tdlgo.info,  Node: Capf-Buster - Cache busting,  Next: Capf transformers,  Prev: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
+File: cape.info,  Node: Capf-Buster - Cache busting,  Next: Capf transformers,  Prev: Super-Capf - Merging multiple Capfs,  Up: CAPF adapters and transformers
 
 3.3 Capf-Buster - Cache busting
 ===============================
@@ -295,7 +294,7 @@ similarly refreshing strategy.
                  (list (cape-capf-buster #'some-caching-capf)))
 
 
-File: doc8tdlgo.info,  Node: Capf transformers,  Prev: Capf-Buster - Cache busting,  Up: CAPF adapters and transformers
+File: cape.info,  Node: Capf transformers,  Prev: Capf-Buster - Cache busting,  Up: CAPF adapters and transformers
 
 3.4 Capf transformers
 =====================
@@ -394,7 +393,7 @@ personal configuration.
      (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent) ;; Was necessary on Emacs 28
 
 
-File: doc8tdlgo.info,  Node: Contributions,  Prev: CAPF adapters and transformers,  Up: Top
+File: cape.info,  Node: Contributions,  Prev: CAPF adapters and transformers,  Up: Top
 
 4 Contributions
 ***************
@@ -406,15 +405,15 @@ copyright assignment to the FSF.
 
 
 Tag Table:
-Node: Top210
-Node: Available Capfs1948
-Node: Configuration3013
-Node: CAPF adapters and transformers5821
-Node: Company adapter6129
-Node: Super-Capf - Merging multiple Capfs8933
-Node: Capf-Buster - Cache busting11896
-Node: Capf transformers12835
-Node: Contributions17907
+Node: Top205
+Node: Available Capfs1938
+Node: Configuration2998
+Node: CAPF adapters and transformers5801
+Node: Company adapter6104
+Node: Super-Capf - Merging multiple Capfs8903
+Node: Capf-Buster - Cache busting11861
+Node: Capf transformers12795
+Node: Contributions17862
 
 End Tag Table
 
