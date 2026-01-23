@@ -1,0 +1,142 @@
+                         ━━━━━━━━━━━━━━━━━━━━━
+                          CAPE.EL - CHANGELOG
+                         ━━━━━━━━━━━━━━━━━━━━━
+
+
+1 Development
+═════════════
+
+  • Remove obsolete `cape-capf-purify' and `cape-wrap-purify'.
+  • `cape-capf-properties': Remove support for `:strip' argument. Ensure
+    that relevant table metadata is overridden too.
+
+
+2 Version 2.5 (2026-01-17)
+══════════════════════════
+
+  • Use `when-let*'.
+
+
+3 Version 2.4 (2025-12-21)
+══════════════════════════
+
+  • `cape-file': Add location metadata for file preview via
+    `corfu-popupinfo-mode'.
+
+
+4 Version 2.3 (2025-11-15)
+══════════════════════════
+
+  • Mark `cape-capf-purify' and `cape-wrap-purify' as obsolete.
+  • `cape-capf-sort': Make `SORT' function argument optional. If the
+    `SORT' argument is nil or not given, the completion UI sorting will
+    take over.
+  • `cape-capf-trigger', `cape-wrap-trigger': New Capf transformer for
+    trigger characters. The Capf will only complete if the trigger
+    character occurs before point. See also `corfu-auto-trigger'.
+  • `cape-capf-choose', `cape-wrap-choose': New Capf transformer to
+    choose from multiple Capfs.
+
+
+5 Version 2.2 (2025-10-13)
+══════════════════════════
+
+  • Minor improvements.
+  • Require Emacs 29.
+
+
+6 Version 2.1 (2025-05-21)
+══════════════════════════
+
+  • Simplify `cape-dabbrev' configuration.
+  • `cape-dabbrev-buffer-function': New variable to configure the
+    buffers searched by `cape-dabbrev'.
+  • `cape-dabbrev-check-other-buffers': Removed in favor of
+    `cape-dabbrev-buffer-function'.
+  • `cape-dabbrev-min-length': Remove variable, since it leads to
+    confusion due to missing completion candidates.
+  • `cape-same-mode-buffers': New public function, renamed from
+    `cape--buffers-major-mode'.
+  • `cape-text-buffers': New function.
+  • `cape-dabbrev-buffer-function', `cape-line-buffer-function': Use
+    `cape-same-mode-buffers'.
+
+
+7 Version 2.0 (2025-03-11)
+══════════════════════════
+
+  • `cape-file': Improve handling of environment variables as part of
+    the path, e.g., `$HOME'.
+  • `cape-company-to-capf': Handle updated return value convention of
+    the `prefix' action of Company backends.
+
+
+8 Version 1.9 (2025-01-28)
+══════════════════════════
+
+  • `cape-capf-super': Use extra metadata instead of completion table
+    metadata.
+  • `cape-emoji': Improve emoji name normalization.
+
+
+9 Version 1.8 (2024-12-22)
+══════════════════════════
+
+  • Require Emacs 28.1.
+  • `cape-capf-properties': Add `:strip' keyword to strip a Capf of its
+    metadata.
+  • `cape-capf-sort': New function.
+  • Add `:display-sort-function' and `:cycle-sort-function' functions to
+    the various Capf property lists.
+
+
+10 Version 1.7 (2024-08-26)
+═══════════════════════════
+
+  • `cape-elisp-symbol': Add wrappers only if not yet there.
+  • `cape-elisp-symbol': Add wrappers in `emacs-lisp-mode' inside
+    strings/comments.
+
+
+11 Version 1.6 (2024-07-23)
+═══════════════════════════
+
+  • Add `cape-prefix-map' for simplified configuration.
+  • `cape-wrap-super': Bugfix. Ensure that annotation functions are
+    called with candidates belonging to the originating Capf.
+  • Disallow `cape-company-to-capf' if `company-mode' is enabled.
+  • Bump Compat dependency to Compat 30.
+
+
+12 Version 1.5 (2024-04-12)
+═══════════════════════════
+
+  • `cape-file-prefix': New variable to customize file name completion
+    prefix. If the input matches one of the configured prefixes, file
+    completion is started.
+  • `cape-capf-super': Support Capfs which return different prefix
+    lengths. This change improves compatibility with Company.
+  • `cape-capf-super': Add support for the `:with' keyword. See the
+    docstring of `cape-wrap-super' for details. This change improves
+    compatibility with Company.
+  • `cape-capf-super': The resulting Capf is exclusive if one of the
+    main Capfs (the Capfs listed before the `:with' keyword) is
+    exclusive.
+  • `cape-capf-super': If the resulting Capf is non-exclusive, one of
+    the main Capfs must have returned candidates, in order for the
+    resulting Capf to return candidates.
+  • `cape-capf-super': Normalize plists which are attached to
+    candidates. This helps with deduplication, such that only candidates
+    with different annotations or icons appear twice.
+  • `cape-dabbrev-check-other-buffers': Support function as
+    customization value. The function should return the exact list of
+    buffers to search.
+
+
+13 Version 1.4 (2024-03-08)
+═══════════════════════════
+
+  • `cape-char': Look back from point, instead of using the match at
+    point. This makes sure that double quotes of a string literal behind
+    point are not
+  …  …

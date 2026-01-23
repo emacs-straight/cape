@@ -245,6 +245,17 @@ BODY is the wrapping expression."
       (let ((default-directory dir)
             (non-essential t))))))
 
+(defun cape--table-drop-metadata (table keys)
+  "Create completion TABLE without metadata KEYS."
+  (if (functionp table)
+      (lambda (str pred action)
+        (if (eq action 'metadata)
+            (when-let* ((md (copy-sequence (funcall table str pred action))))
+              (dolist (k keys) (setq md (assq-delete-all k md)))
+              md)
+          (complete-with-action action table str pred)))
+    table))
+
 (defvar cape--debug-length 5
   "Length of printed lists in `cape--debug-print'.")
 
@@ -1128,14 +1139,17 @@ This function can be used as an advice around an existing Capf."
 
 ;;;###autoload
 (defun cape-wrap-properties (capf &rest properties)
-  "Call CAPF and strip or add completion PROPERTIES.
-Completion properties include for example :exclusive, :category,
-:annotation-function, :display-sort-function and various :company-*
-extensions.  Strip all properties if PROPERTIES is :strip."
-  (pcase (funcall capf)
-    (`(,beg ,end ,table . ,plist)
-     `( ,beg ,end ,table
-        ,@(and (not (eq :strip (car properties))) (append properties plist))))))
+  "Call CAPF and add completion PROPERTIES.
+Completion properties include :exclusive, :category,
+:annotation-function, :affixation-function, :display-sort-function,
+:company-kind, :company-doc-buffer, :company-docsig, :company-location,
+:company-deprecated and :company-prefix-length."
+  (let ((keys (cl-loop for (k _) on properties by #'cddr
+                       collect (intern (substring (symbol-name k) 1)))))
+    (pcase (funcall capf)
+      (`(,beg ,end ,table . ,plist)
+       `( ,beg ,end ,(cape--table-drop-metadata table keys)
+          ,@properties ,@plist)))))
 
 ;;;###autoload
 (defun cape-wrap-nonexclusive (capf)
