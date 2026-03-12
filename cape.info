@@ -1,4 +1,4 @@
-This is cape.info, produced by makeinfo version 7.1.1 from cape.texi.
+This is cape.info, produced by makeinfo version 7.2 from cape.texi.
 
 INFO-DIR-SECTION Emacs misc features
 START-INFO-DIR-ENTRY
@@ -49,7 +49,6 @@ CAPF adapters and transformers
 * Super-Capf - Merging multiple Capfs::
 * Capf-Buster - Cache busting::
 * Capf transformers::
-
 
 
 File: cape.info,  Node: Available Capfs,  Next: Configuration,  Prev: Top,  Up: Top
@@ -402,22 +401,22 @@ Since this package is part of GNU ELPA
 (https://elpa.gnu.org/packages/cape.html) contributions require a
 copyright assignment to the FSF.
 
-
 
 Tag Table:
-Node: Top205
-Node: Available Capfs1938
-Node: Configuration2998
-Node: CAPF adapters and transformers5801
-Node: Company adapter6104
-Node: Super-Capf - Merging multiple Capfs8903
-Node: Capf-Buster - Cache busting11861
-Node: Capf transformers12795
-Node: Contributions17862
+Node: Top203
+Node: Available Capfs1935
+Node: Configuration2995
+Node: CAPF adapters and transformers5798
+Node: Company adapter6101
+Node: Super-Capf - Merging multiple Capfs8900
+Node: Capf-Buster - Cache busting11858
+Node: Capf transformers12792
+Node: Contributions17859
 
 End Tag Table
 
 
 Local Variables:
 coding: utf-8
+Info-documentlanguage: en
 End:
