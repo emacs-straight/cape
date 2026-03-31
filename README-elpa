@@ -35,7 +35,6 @@ Table of Contents
 .. 2. Super-Capf - Merging multiple Capfs
 .. 3. Capf-Buster - Cache busting
 .. 4. Capf transformers
-4. Contributions
 
 
 [Corfu] <https://github.com/minad/corfu>
@@ -66,9 +65,9 @@ Table of Contents
 2 Configuration
 ═══════════════
 
-  Cape is available on GNU ELPA and MELPA. You can install the package
-  with `package-install'. In the following we present a sample
-  configuration based on the popular `use-package' macro.
+  Cape is available on MELPA. You can install the package with
+  `package-install'. In the following we present a sample configuration
+  based on the popular `use-package' macro.
 
   I recommend to bind the `cape-*' completion commands to keys such that
   you can invoke them explicitly. This makes particular sense for
@@ -382,13 +381,3 @@ Table of Contents
 [Corfu issue tracker] <https://github.com/minad/corfu/issues>
 
 [Corfu wiki.] <https://github.com/minad/corfu/wiki>
-
-
-4 Contributions
-═══════════════
-
-  Since this package is part of [GNU ELPA] contributions require a
-  copyright assignment to the FSF.
-
-
-[GNU ELPA] <https://elpa.gnu.org/packages/cape.html>
