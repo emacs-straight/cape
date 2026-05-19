@@ -65,9 +65,9 @@ Table of Contents
 2 Configuration
 ═══════════════
 
-  Cape is available on MELPA. You can install the package with
-  `package-install'. In the following we present a sample configuration
-  based on the popular `use-package' macro.
+  Cape is available on [ELPA] and [MELPA]. You can install the package
+  with `package-install'. In the following we present a sample
+  configuration based on the popular `use-package' macro.
 
   I recommend to bind the `cape-*' completion commands to keys such that
   you can invoke them explicitly. This makes particular sense for
@@ -120,6 +120,10 @@ Table of Contents
   │ )
   └────
 
+
+[ELPA] <https://elpa.gnu.org/packages/cape.html>
+
+[MELPA] <https://melpa.org/#/cape>
 
 ["Running Hooks" in the Elisp manual] <info:elisp#Running Hooks>
 
