@@ -80,9 +80,9 @@ File: cape.info,  Node: Configuration,  Next: CAPF adapters and transformers,  P
 ***************
 
 Cape is available on ELPA (https://elpa.gnu.org/packages/cape.html) and
-MELPA (https://melpa.org/#/cape).  You can install the package with
-‘package-install’.  In the following we present a sample configuration
-based on the popular ‘use-package’ macro.
+MELPA (https://releases.melpa.org/#/cape).  You can install the package
+with ‘package-install’.  In the following we present a sample
+configuration based on the popular ‘use-package’ macro.
 
    I recommend to bind the ‘cape-*’ completion commands to keys such
 that you can invoke them explicitly.  This makes particular sense for
@@ -398,11 +398,11 @@ Tag Table:
 Node: Top205
 Node: Available Capfs1920
 Node: Configuration2980
-Node: CAPF adapters and transformers5848
-Node: Company adapter6129
-Node: Super-Capf - Merging multiple Capfs8928
-Node: Capf-Buster - Cache busting11886
-Node: Capf transformers12820
+Node: CAPF adapters and transformers5857
+Node: Company adapter6138
+Node: Super-Capf - Merging multiple Capfs8937
+Node: Capf-Buster - Cache busting11895
+Node: Capf transformers12829
 
 End Tag Table
 
