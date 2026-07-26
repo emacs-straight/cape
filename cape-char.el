@@ -45,12 +45,10 @@ are not included. Hash values are either char or strings."
       (quail-build-decode-map (list (quail-map)) "" dm 0)
       (pcase-dolist (`(,name . ,val) (cdr dm))
         (when (equal method "emoji")
-          (setq name (replace-regexp-in-string
+          (setq name (string-replace
                       ": " "-"
                       (replace-regexp-in-string
-                       "[’“”!()]" ""
-                       (replace-regexp-in-string
-                        "[_ &.]+" "-" name))))
+                       "[_ &.]+" "-" name)))
           (when (string-match-p "\\`[[:alnum:]-]*\\'" name)
             (setq name (format ":%s:" name))))
         (when (memq (aref name 0) prefix)
@@ -104,9 +102,9 @@ PREFIX are the prefix characters."
          :type 'boolean
          :group 'cape)
        (defvar ,props
-         (list :annotation-function (apply-partially #'cape-char--annotation ,hash)
-               :company-docsig (apply-partially #'cape-char--signature ,hash)
-               :exit-function (apply-partially #'cape-char--exit ,hash)
+         (list :annotation-function (lambda (x) (cape-char--annotation ,hash x))
+               :company-docsig (lambda (x) (cape-char--signature ,hash x))
+               :exit-function (lambda (x) (cape-char--exit ,hash x))
                :company-kind (lambda (_) 'text)
                :category ',capf
                :exclusive 'no)

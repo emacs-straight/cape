@@ -3,13 +3,22 @@
                          ━━━━━━━━━━━━━━━━━━━━━
 
 
-1 Version 2.7 (2026-05-19)
+1 Development
+═════════════
+
+  • `cape-dict', `cape-dabbrev': Down case candidates if input is all
+    lower case.
+  • `cape-capf-super': Improve `try-completion' handling.
+  • `cape-emoji': Improve emoji name normalization.
+
+
+2 Version 2.7 (2026-05-19)
 ══════════════════════════
 
   • Require Compat 31.
 
 
-2 Version 2.6 (2026-01-24)
+3 Version 2.6 (2026-01-24)
 ══════════════════════════
 
   • Remove obsolete `cape-capf-purify' and `cape-wrap-purify'.
@@ -17,20 +26,20 @@
     that relevant table metadata is overridden too.
 
 
-3 Version 2.5 (2026-01-17)
+4 Version 2.5 (2026-01-17)
 ══════════════════════════
 
   • Use `when-let*'.
 
 
-4 Version 2.4 (2025-12-21)
+5 Version 2.4 (2025-12-21)
 ══════════════════════════
 
   • `cape-file': Add location metadata for file preview via
     `corfu-popupinfo-mode'.
 
 
-5 Version 2.3 (2025-11-15)
+6 Version 2.3 (2025-11-15)
 ══════════════════════════
 
   • Mark `cape-capf-purify' and `cape-wrap-purify' as obsolete.
@@ -44,14 +53,14 @@
     choose from multiple Capfs.
 
 
-6 Version 2.2 (2025-10-13)
+7 Version 2.2 (2025-10-13)
 ══════════════════════════
 
   • Minor improvements.
   • Require Emacs 29.
 
 
-7 Version 2.1 (2025-05-21)
+8 Version 2.1 (2025-05-21)
 ══════════════════════════
 
   • Simplify `cape-dabbrev' configuration.
@@ -68,7 +77,7 @@
     `cape-same-mode-buffers'.
 
 
-8 Version 2.0 (2025-03-11)
+9 Version 2.0 (2025-03-11)
 ══════════════════════════
 
   • `cape-file': Improve handling of environment variables as part of
@@ -77,15 +86,15 @@
     the `prefix' action of Company backends.
 
 
-9 Version 1.9 (2025-01-28)
-══════════════════════════
+10 Version 1.9 (2025-01-28)
+═══════════════════════════
 
   • `cape-capf-super': Use extra metadata instead of completion table
     metadata.
   • `cape-emoji': Improve emoji name normalization.
 
 
-10 Version 1.8 (2024-12-22)
+11 Version 1.8 (2024-12-22)
 ═══════════════════════════
 
   • Require Emacs 28.1.
@@ -96,7 +105,7 @@
     the various Capf property lists.
 
 
-11 Version 1.7 (2024-08-26)
+12 Version 1.7 (2024-08-26)
 ═══════════════════════════
 
   • `cape-elisp-symbol': Add wrappers only if not yet there.
@@ -104,7 +113,7 @@
     strings/comments.
 
 
-12 Version 1.6 (2024-07-23)
+13 Version 1.6 (2024-07-23)
 ═══════════════════════════
 
   • Add `cape-prefix-map' for simplified configuration.
@@ -114,7 +123,7 @@
   • Bump Compat dependency to Compat 30.
 
 
-13 Version 1.5 (2024-04-12)
+14 Version 1.5 (2024-04-12)
 ═══════════════════════════
 
   • `cape-file-prefix': New variable to customize file name completion
@@ -134,14 +143,4 @@
   • `cape-capf-super': Normalize plists which are attached to
     candidates. This helps with deduplication, such that only candidates
     with different annotations or icons appear twice.
-  • `cape-dabbrev-check-other-buffers': Support function as
-    customization value. The function should return the exact list of
-    buffers to search.
-
-
-14 Version 1.4 (2024-03-08)
-═══════════════════════════
-
-  • `cape-char': Look back from point, instead of using the match at
-    point. This
   …  …

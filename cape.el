@@ -164,8 +164,7 @@ The buffers are scanned for completion candidates by `cape-line'."
 
 (defun cape--case-replace-list (flag input strs)
   "Replace case of STRS depending on INPUT and FLAG."
-  (if (and (if (eq flag 'case-replace) case-replace flag)
-           (let (case-fold-search) (string-match-p "\\`[[:upper:]]" input)))
+  (if (if (eq flag 'case-replace) case-replace flag)
       (mapcar (apply-partially #'cape--case-replace flag input) strs)
     strs))
 
@@ -173,14 +172,19 @@ The buffers are scanned for completion candidates by `cape-line'."
   "Replace case of STR depending on INPUT and FLAG."
   (or (and (if (eq flag 'case-replace) case-replace flag)
            (string-prefix-p input str t)
-           (let (case-fold-search) (string-match-p "\\`[[:upper:]]" input))
-           (save-match-data
-             ;; Ensure that single character uppercase input does not lead to an
-             ;; all uppercase result.
-             (when (and (= (length input) 1) (> (length str) 1))
-               (setq input (concat input (substring str 1 2))))
-             (and (string-match input input)
-                  (replace-match str nil nil input))))
+           (cond
+            ((let (case-fold-search) (string-match-p "\\`[[:upper:]]" input))
+             (save-match-data
+               ;; Ensure that single character uppercase input does not lead to
+               ;; an all uppercase result.
+               (when (and (= (length input) 1) (> (length str) 1))
+                 (setq input (concat input (substring str 1 2))))
+               (and (string-match input input)
+                    (replace-match str nil nil input))))
+            ((let (case-fold-search)
+               (and (string-match-p "\\`[[:lower:]]*\\'" input)
+                    (not (string-match-p "\\`[[:lower:]]*\\'" str))))
+             (downcase str))))
       str))
 
 (defun cape--separator-p (str)
@@ -590,10 +594,9 @@ If INTERACTIVE is nil the function acts like a Capf."
       (dabbrev--reset-global-variables)
       (cons
        (apply-partially #'string-prefix-p input)
-       (cl-loop
-        with ic = (cape--case-fold-p dabbrev-case-fold-search)
-        for w in (dabbrev--find-all-expansions input ic)
-        collect (cape--case-replace (and ic dabbrev-case-replace) input w))))))
+       (let ((ic (cape--case-fold-p dabbrev-case-fold-search)))
+         (cape--case-replace-list (and ic dabbrev-case-replace) input
+                                  (dabbrev--find-all-expansions input ic)))))))
 
 (defun cape--dabbrev-bounds ()
   "Return bounds of abbreviation."
@@ -908,6 +911,96 @@ again if the input prefix changed."
      :annotation-function :exit-function)
   "List of extra functions which are handled by `cape-wrap-super'.")
 
+(defun cape--super-function (prop cache)
+  "Extra function for PROP given the candidate CACHE."
+  (lambda (cand &rest args)
+    (if-let* ((ref (get-text-property 0 'cape--super cand)))
+        (when-let* ((fun (plist-get (cdr ref) prop)))
+          (apply fun (car ref) args))
+      (when-let* ((ht (car cache))
+                  (plist (gethash cand ht))
+                  (fun (plist-get plist prop)))
+        (apply fun cand args)))))
+
+(defun cape--super-prefix (beg end results)
+  "Find tables from Capf RESULTS matching prefix at BEG to END."
+  (let (tables exc prefix-len)
+    (cl-loop
+     for (main beg2 end2 table . plist) in results do
+     ;; Note: `cape-capf-super' currently cannot merge Capfs which trigger at
+     ;; different beginning positions.  In order to support this, take the
+     ;; smallest BEG value and then normalize all candidates by prefixing them
+     ;; such that they all start at the smallest BEG position.
+     (when (= beg beg2)
+       (push (list main (plist-get plist :predicate) table
+                   (cl-loop for f in cape--super-functions
+                            for v = (plist-get plist f)
+                            if v collect f and collect v))
+             tables)
+       ;; The resulting merged Capf is exclusive if one of the main
+       ;; Capfs is exclusive.
+       (when (and main (not (eq (plist-get plist :exclusive) 'no)))
+         (setq exc t))
+       (setq end (max end end2))
+       (let ((plen (plist-get plist :company-prefix-length)))
+         (cond
+          ((eq plen t)
+           (setq prefix-len t))
+          ((and (not prefix-len) (integerp plen))
+           (setq prefix-len plen))
+          ((and (integerp prefix-len) (integerp plen))
+           (setq prefix-len (max prefix-len plen)))))))
+    (list (nreverse tables) exc prefix-len)))
+
+(defun cape--super-all (str pred tables exc cache)
+  "Compute all candidates given STR, PRED, TABLES, EXC and CACHE."
+  (let ((ht (make-hash-table :test #'equal))
+        (candidates nil))
+    (cl-loop
+     for (main table-pred table cand-plist) in tables do
+     (let* ((pr (if (and table-pred pred)
+                    (lambda (x) (and (funcall table-pred x) (funcall pred x)))
+                  (or table-pred pred)))
+            (md (completion-metadata "" table pr))
+            (sort (or (completion-metadata-get md 'display-sort-function)
+                      #'identity))
+            ;; Always compute candidates of the main Capf
+            ;; tables, which come first in the tables
+            ;; list. For the :with Capfs only compute
+            ;; candidates if we've already determined that
+            ;; main candidates are available.
+            (cands (when (or main (or exc (car cache) candidates))
+                     (funcall sort (all-completions str table pr)))))
+       ;; Handle duplicates with a hash table.
+       (cl-loop
+        for cand in-ref cands
+        for dup = (gethash cand ht t) do
+        (cond
+         ((eq dup t)
+          ;; Candidate does not yet exist.
+          (puthash cand cand-plist ht))
+         ((not (equal dup cand-plist))
+          ;; Duplicate candidate. Candidate plist is
+          ;; different, therefore disambiguate the
+          ;; candidates.
+          (setf cand (propertize cand 'cape--super
+                                 (cons cand cand-plist))))))
+       (when cands (push cands candidates))))
+    (when (or (car cache) candidates)
+      (setf candidates (apply #'nconc (nreverse candidates))
+            (car cache) ht)
+      candidates)))
+
+(defun cape--super-complete (str pred action tables)
+  "Complete with ACTION for input STR and predicate PRED for all TABLES."
+  (cl-loop
+   for (_main table-pred table _cand-plist) in tables
+   thereis (complete-with-action
+            action table str
+            (if (and table-pred pred)
+                (lambda (x) (and (funcall table-pred x) (funcall pred x)))
+              (or table-pred pred)))))
+
 ;;;###autoload
 (defun cape-wrap-super (&rest capfs)
   "Call CAPFS and return merged completion result.
@@ -928,106 +1021,31 @@ turn."
   (when-let* ((results (cl-loop for capf in capfs until (eq capf :with)
                                 for res = (funcall capf)
                                 if res collect (cons t res))))
-    (pcase-let* ((results (nconc results
-                                 (cl-loop for capf in (cdr (memq :with capfs))
-                                          for res = (funcall capf)
-                                          if res collect (cons nil res))))
-                 (`((,_main ,beg ,end . ,_)) results)
-                 (cand-ht nil)
-                 (tables nil)
-                 (exclusive nil)
-                 (prefix-len nil))
-      (cl-loop for (main beg2 end2 table . plist) in results do
-               ;; Note: `cape-capf-super' currently cannot merge Capfs which
-               ;; trigger at different beginning positions.  In order to support
-               ;; this, take the smallest BEG value and then normalize all
-               ;; candidates by prefixing them such that they all start at the
-               ;; smallest BEG position.
-               (when (= beg beg2)
-                 (push (list main (plist-get plist :predicate) table
-                             ;; Plist attached to the candidates
-                             (mapcan (lambda (f)
-                                       (when-let* ((v (plist-get plist f)))
-                                         (list f v)))
-                                     cape--super-functions))
-                       tables)
-                 ;; The resulting merged Capf is exclusive if one of the main
-                 ;; Capfs is exclusive.
-                 (when (and main (not (eq (plist-get plist :exclusive) 'no)))
-                   (setq exclusive t))
-                 (setq end (max end end2))
-                 (let ((plen (plist-get plist :company-prefix-length)))
-                   (cond
-                    ((eq plen t)
-                     (setq prefix-len t))
-                    ((and (not prefix-len) (integerp plen))
-                     (setq prefix-len plen))
-                    ((and (integerp prefix-len) (integerp plen))
-                     (setq prefix-len (max prefix-len plen)))))))
-      (setq tables (nreverse tables))
+    (nconc results (cl-loop for capf in (cdr (memq :with capfs))
+                            for res = (funcall capf)
+                            if res collect (cons nil res)))
+    (pcase-let* ((`((,_main ,beg ,end . ,_)) results)
+                 (`(,tables ,exc ,plen) (cape--super-prefix beg end results))
+                 (cache (cons nil nil)))
       `( ,beg ,end
          ,(lambda (str pred action)
             (pcase action
               ((or `(boundaries . ,_) 'metadata) nil)
               ('t ;; all-completions
-               (let ((ht (make-hash-table :test #'equal))
-                     (candidates nil))
-                 (cl-loop for (main table-pred table cand-plist) in tables do
-                          (let* ((pr (if (and table-pred pred)
-                                         (lambda (x) (and (funcall table-pred x) (funcall pred x)))
-                                       (or table-pred pred)))
-                                 (md (completion-metadata "" table pr))
-                                 (sort (or (completion-metadata-get md 'display-sort-function)
-                                           #'identity))
-                                 ;; Always compute candidates of the main Capf
-                                 ;; tables, which come first in the tables
-                                 ;; list. For the :with Capfs only compute
-                                 ;; candidates if we've already determined that
-                                 ;; main candidates are available.
-                                 (cands (when (or main (or exclusive cand-ht candidates))
-                                          (funcall sort (all-completions str table pr)))))
-                            ;; Handle duplicates with a hash table.
-                            (cl-loop
-                             for cand in-ref cands
-                             for dup = (gethash cand ht t) do
-                             (cond
-                              ((eq dup t)
-                               ;; Candidate does not yet exist.
-                               (puthash cand cand-plist ht))
-                              ((not (equal dup cand-plist))
-                               ;; Duplicate candidate. Candidate plist is
-                               ;; different, therefore disambiguate the
-                               ;; candidates.
-                               (setf cand (propertize cand 'cape-capf-super
-                                                      (cons cand cand-plist))))))
-                            (when cands (push cands candidates))))
-                 (when (or cand-ht candidates)
-                   (setq candidates (apply #'nconc (nreverse candidates))
-                         cand-ht ht)
-                   candidates)))
-              (_ ;; try-completion and test-completion
-               (cl-loop for (_main table-pred table _cand-plist) in tables thereis
-                        (complete-with-action
-                         action table str
-                         (if (and table-pred pred)
-                             (lambda (x) (and (funcall table-pred x) (funcall pred x)))
-                           (or table-pred pred)))))))
+               (cape--super-all str pred tables exc cache))
+              ('nil ;; try-completion
+               (let ((cands (cape--super-all str pred tables exc cache)))
+                 (or (try-completion str cands pred)
+                     (cape--super-complete str pred action tables))))
+              (_ ;; test-completion and other actions
+               (cape--super-complete str pred action tables))))
          :category cape-super
-         :company-prefix-length ,prefix-len
+         :company-prefix-length ,plen
          :display-sort-function ,#'identity
          :cycle-sort-function ,#'identity
-         ,@(and (not exclusive) '(:exclusive no))
-         ,@(mapcan
-            (lambda (prop)
-              (list prop
-                    (lambda (cand &rest args)
-                      (if-let* ((ref (get-text-property 0 'cape-capf-super cand)))
-                          (when-let* ((fun (plist-get (cdr ref) prop)))
-                            (apply fun (car ref) args))
-                        (when-let* ((plist (and cand-ht (gethash cand cand-ht)))
-                                    (fun (plist-get plist prop)))
-                          (apply fun cand args))))))
-            cape--super-functions)))))
+         ,@(and (not exc) '(:exclusive no))
+         ,@(cl-loop for f in cape--super-functions
+                    collect f collect (cape--super-function f cache))))))
 
 ;;;###autoload
 (defun cape-wrap-choose (&rest capfs)
