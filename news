@@ -3,8 +3,8 @@
                          ━━━━━━━━━━━━━━━━━━━━━
 
 
-1 Development
-═════════════
+1 Version 2.8 (2026-08-01)
+══════════════════════════
 
   • `cape-dict', `cape-dabbrev': Down case candidates if input is all
     lower case.
@@ -142,5 +142,5 @@
     resulting Capf to return candidates.
   • `cape-capf-super': Normalize plists which are attached to
     candidates. This helps with deduplication, such that only candidates
-    with different annotations or icons appear twice.
+    with different annotations or
   …  …
